@@ -1,12 +1,3 @@
-/**
- * Chat utility functions
- */
-
-/**
- * Generate welcome message for new chat from seller
- * @param {Object} seller - Seller user object
- * @returns {string} - Formatted welcome message
- */
 exports.generateSellerWelcomeMessage = (seller) => {
   // Get seller name
   const sellerName = seller.firstName && seller.lastName 
@@ -50,14 +41,6 @@ ${lastSeenText}`;
   return welcomeText;
 };
 
-/**
- * Create initial message from seller when new chat is created
- * @param {string} chatId - Chat ID
- * @param {string} sellerId - Seller user ID
- * @param {string} buyerId - Buyer user ID
- * @param {Object} seller - Seller user object
- * @returns {Promise<Object>} - Created message object
- */
 exports.createInitialSellerMessage = async (chatId, sellerId, buyerId, seller) => {
   const Message = require('../db/models/messageModel');
   

@@ -14,10 +14,7 @@ const PORT = process.env.PORT || 5000;
 // Connect to database
 connectDB();
 
-// Middleware
-// CORS configuration
-// - In production: allow only FRONTEND_ORIGIN (e.g., https://app.souq.com)
-// - In development: explicitly allow common localhost Vite ports regardless of FRONTEND_ORIGIN
+// CORS setup
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || process.env.FRONTEND_URL;
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -59,7 +56,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json());
-// app.use(passport.initialize());
+app.use(passport.initialize());
 
 // Serve static files (images, uploads)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
