@@ -24,7 +24,7 @@ const devAllowedOrigins = [
   'http://127.0.0.1:5173',
   'http://127.0.0.1:5174',
 ];
-
+1
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (e.g., curl, mobile apps)

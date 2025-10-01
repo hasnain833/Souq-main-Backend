@@ -33,8 +33,8 @@ exports.buildProductReq = (userId, body, files) => {
 exports.buildProductRes = (product) => {
   return {
     id: product._id,
-    // user: product.user,
-    // user: UserRes(product.user),
+    user: product.user,
+    user: UserRes(product.user),
     user: product.user ? UserRes(product.user) : null,
     title: product.title,
     description: product.description,
@@ -84,11 +84,11 @@ exports.getAllProductRes = (product) => {
 exports.updateProductRes = (product) => {
   return {
     id: product._id,
-    // user: product.user,
+    user: product.user,
     user: {
       id: product.user._id,
-      // name: product.user.name,
-      // email: product.user.email
+      name: product.user.name,
+      email: product.user.email
     },
     title: product.title,
     description: product.description,

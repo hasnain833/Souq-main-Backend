@@ -1,14 +1,14 @@
-/**
- * Script to seed initial categories for testing
- */
-
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Category = require('../db/models/categoryModel');
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
+    if (!uri) {
+      throw new Error('MONGO_URI or MONGODB_URI must be set');
+    }
+    await mongoose.connect(uri);
     console.log('✅ MongoDB connected');
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error);
@@ -104,6 +104,128 @@ const seedCategories = async () => {
                 items: [
                   { name: 'Sofas', slug: 'sofas' },
                   { name: 'Coffee Tables', slug: 'coffee-tables' }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        name: 'Beauty & Personal Care',
+        slug: 'beauty-personal-care',
+        subCategories: [
+          {
+            name: 'Makeup',
+            slug: 'makeup',
+            childCategories: [
+              {
+                name: 'Face',
+                slug: 'face',
+                items: [
+                  { name: 'Foundation', slug: 'foundation' },
+                  { name: 'Concealer', slug: 'concealer' }
+                ]
+              },
+              {
+                name: 'Eyes',
+                slug: 'eyes',
+                items: [
+                  { name: 'Mascara', slug: 'mascara' },
+                  { name: 'Eyeliner', slug: 'eyeliner' }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        name: 'Sports & Outdoors',
+        slug: 'sports-outdoors',
+        subCategories: [
+          {
+            name: 'Fitness',
+            slug: 'fitness',
+            childCategories: [
+              {
+                name: 'Gym Equipment',
+                slug: 'gym-equipment',
+                items: [
+                  { name: 'Dumbbells', slug: 'dumbbells' },
+                  { name: 'Yoga Mats', slug: 'yoga-mats' }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        name: 'Kids & Babies',
+        slug: 'kids-babies',
+        subCategories: [
+          {
+            name: 'Baby Clothing',
+            slug: 'baby-clothing',
+            childCategories: [
+              {
+                name: 'Newborn',
+                slug: 'newborn',
+                items: [
+                  { name: 'Onesies', slug: 'onesies' },
+                  { name: 'Booties', slug: 'booties' }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        name: 'Books & Media',
+        slug: 'books-media',
+        subCategories: [
+          {
+            name: 'Books',
+            slug: 'books',
+            childCategories: [
+              {
+                name: 'Fiction',
+                slug: 'fiction',
+                items: [
+                  { name: 'Novels', slug: 'novels' },
+                  { name: 'Short Stories', slug: 'short-stories' }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        name: 'Accessories',
+        slug: 'accessories',
+        subCategories: [
+          {
+            name: 'Bags & Wallets',
+            slug: 'bags-wallets',
+            childCategories: [
+              {
+                name: 'Bags',
+                slug: 'bags',
+                items: [
+                  { name: 'Handbags', slug: 'handbags' },
+                  { name: 'Backpacks', slug: 'backpacks' }
+                ]
+              }
+            ]
+          },
+          {
+            name: 'Jewelry',
+            slug: 'jewelry',
+            childCategories: [
+              {
+                name: 'Watches',
+                slug: 'watches',
+                items: [
+                  { name: 'Analog', slug: 'analog' },
+                  { name: 'Digital', slug: 'digital' }
                 ]
               }
             ]
