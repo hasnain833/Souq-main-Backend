@@ -6,6 +6,15 @@ const connectDB = require('../db');
 
 // Catch-all serverless entry for any /api/* path on Vercel
 module.exports = async (req, res) => {
+  // Fast-path CORS preflight to avoid DB connection
+  if (req.method === 'OPTIONS') {
+    if (req.url && !req.url.startsWith('/api')) {
+      req.url = `/api${req.url}`;
+    }
+    const handler = serverless(app);
+    return handler(req, res);
+  }
+
   try {
     await connectDB();
   } catch (err) {

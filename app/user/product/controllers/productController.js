@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Product = require("../../../../db/models/productModel");
+const SizeChart = require("../../../../db/models/sizeChartModel");
 const {
   successResponse,
   errorResponse,
@@ -27,6 +28,30 @@ exports.sellProduct = async (req, res) => {
     res.status(201).json({ message: "Product listed successfully", product });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+// Public: Get sizes for a child category (by ID or slug)
+// Returns empty sizes array when not found to avoid frontend crashes
+exports.getSizesForChildCategory = async (req, res) => {
+  try {
+    const { childCategoryId, slug } = req.params;
+
+    let chart = null;
+    if (childCategoryId) {
+      chart = await SizeChart.findOne({ "childCategory._id": childCategoryId }).lean();
+    } else if (slug) {
+      chart = await SizeChart.findOne({ "childCategory.slug": slug }).lean();
+    }
+
+    if (!chart) {
+      return successResponse(res, "No sizes available for this category", { sizes: [] });
+    }
+
+    return successResponse(res, "Sizes fetched successfully", { sizes: chart.sizes || [] });
+  } catch (error) {
+    // Fail-safe: return empty sizes to keep UI stable
+    return successResponse(res, "Failed to fetch sizes; returning empty list", { sizes: [] });
   }
 };
 

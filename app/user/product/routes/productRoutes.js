@@ -12,6 +12,10 @@ router.get('/my-products', verifyToken, productController.getMyProducts);
 router.get('/filter', productController.filterProducts);
 router.get('/all', optionalAuth, productController.getAllProducts);
 
+// === Public Sizes endpoint (for Sell Now form) ===
+// Returns sizes for a child category by ID or slug. If none found, returns empty array.
+router.get('/sizes/category/:childCategoryId/:slug?', productController.getSizesForChildCategory);
+
 // === Product creation/update ===
 router.post('/sell', verifyToken, productController.sellProduct);
 router.post('/sell-product', verifyToken, (req, res, next) => {
