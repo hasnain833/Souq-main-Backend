@@ -12,6 +12,15 @@ const cardRoutes = require('./cards/routes/cardRoutes');
 const standardPaymentRoutes = require('./payments/routes/standardPaymentRoutes');
 const paymentMethodRoutes = require('./payments/routes/paymentMethodRoutes');
 const bankAccountRoutes = require('./bankAccounts/routes/bankAccountRoutes');
+const addressRoutes = require('./addresses/routes/addressRoutes');
+const shippingRoutes = require('./shipping/routes/shippingRoutes');
+const orderRoutes = require('./shipping/routes/orderRoutes');
+const ratingRoutes = require('./rating/routes/ratingRoutes');
+const walletRoutes = require('./wallet/routes/walletRoutes');
+const locationRoutes = require('./location/routes/locationRoutes');
+const transactionRoutes = require('./transaction/routes/transactionRoutes');
+const notificationRoutes = require('./notifications/routes/notificationRoutes');
+const seoRoutes = require('./seo/routes/seoRoutes');
 
 //User Auth APIs
 router.use('/auth', userAuthRoutes);
@@ -32,6 +41,7 @@ if (MINIMAL_MODE) {
 router.use('/product', productRoutes);
 
 //User Chat APIs
+router.use('/chat', chatRoutes);
 
 //User Offer APIs
 router.use('/offer', offerRoutes);
