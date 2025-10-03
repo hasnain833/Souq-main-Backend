@@ -253,9 +253,9 @@ const standardPaymentSchema = new mongoose.Schema({
 // Indexes for performance
 standardPaymentSchema.index({ buyer: 1, status: 1 });
 standardPaymentSchema.index({ seller: 1, status: 1 });
-standardPaymentSchema.index({ product: 1 });
+// standardPaymentSchema.index({ product: 1 }); // Duplicate of field-level index: true
 standardPaymentSchema.index({ createdAt: -1 });
-standardPaymentSchema.index({ gatewayTransactionId: 1 });
+// standardPaymentSchema.index({ gatewayTransactionId: 1 }); // Duplicate of field-level index: true
 
 // Virtual for seller payout amount
 standardPaymentSchema.virtual('sellerPayout').get(function() {

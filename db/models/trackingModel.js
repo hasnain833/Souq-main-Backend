@@ -271,8 +271,8 @@ const trackingSchema = new mongoose.Schema({
 trackingSchema.index({ orderId: 1, orderType: 1 });
 trackingSchema.index({ buyer: 1, status: 1 });
 trackingSchema.index({ seller: 1, status: 1 });
-trackingSchema.index({ trackingId: 1 });
-trackingSchema.index({ transactionId: 1 });
+// trackingSchema.index({ trackingId: 1 }); // Duplicate of field-level index: true
+// trackingSchema.index({ transactionId: 1 }); // Duplicate of field-level index: true
 trackingSchema.index({ 'shippingProvider.name': 1 });
 trackingSchema.index({ createdAt: -1 });
 trackingSchema.index({ 'aftershipTracking.aftershipId': 1 });

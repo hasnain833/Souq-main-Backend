@@ -21,8 +21,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 const devAllowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
-  // 'http://127.0.0.1:5173',
-  // 'http://127.0.0.1:5174',
+  'https://souq-frontend.vercel.app/'
 ];
 1
 const corsOptions = {
@@ -124,34 +123,36 @@ app.use((req, res) => {
 });
 
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 SOUQ Marketplace API running on http://localhost:${PORT}`);
-  console.log(`📊 User API: http://localhost:${PORT}/api/user`);
-  console.log(`⚙️ Admin API: http://localhost:${PORT}/api/admin`);
-  console.log(`❤️ Health Check: http://localhost:${PORT}/health`);
-  console.log('');
-  console.log('📋 Admin API Endpoints:');
-  console.log(`   📦 Orders: http://localhost:${PORT}/api/admin/orders`);
-  console.log(`   📊 Order Stats: http://localhost:${PORT}/api/admin/orders/stats`);
-  console.log(`   🛡️ Escrow Orders: http://localhost:${PORT}/api/admin/orders/method/escrow`);
-  console.log(`   💳 Standard Orders: http://localhost:${PORT}/api/admin/orders/method/standard`);
-  console.log(`   ⭐ Ratings: http://localhost:${PORT}/api/admin/ratings`);
-  console.log(`   📊 Rating Stats: http://localhost:${PORT}/api/admin/ratings/stats`);
-  console.log(`   🚨 Reports: http://localhost:${PORT}/api/admin/reports`);
-  console.log(`   📊 Report Stats: http://localhost:${PORT}/api/admin/reports/stats`);
-  console.log('');
-  console.log('💡 Note: All admin endpoints require authentication');
+// Start server only when running locally (not on Vercel)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 SOUQ Marketplace API running on http://localhost:${PORT}`);
+    console.log(`📊 User API: http://localhost:${PORT}/api/user`);
+    console.log(`⚙️ Admin API: http://localhost:${PORT}/api/admin`);
+    console.log(`❤️ Health Check: http://localhost:${PORT}/health`);
+    console.log('');
+    console.log('📋 Admin API Endpoints:');
+    console.log(`   📦 Orders: http://localhost:${PORT}/api/admin/orders`);
+    console.log(`   📊 Order Stats: http://localhost:${PORT}/api/admin/orders/stats`);
+    console.log(`   🛡️ Escrow Orders: http://localhost:${PORT}/api/admin/orders/method/escrow`);
+    console.log(`   💳 Standard Orders: http://localhost:${PORT}/api/admin/orders/method/standard`);
+    console.log(`   ⭐ Ratings: http://localhost:${PORT}/api/admin/ratings`);
+    console.log(`   📊 Rating Stats: http://localhost:${PORT}/api/admin/ratings/stats`);
+    console.log(`   🚨 Reports: http://localhost:${PORT}/api/admin/reports`);
+    console.log(`   📊 Report Stats: http://localhost:${PORT}/api/admin/reports/stats`);
+    console.log('');
+    console.log('💡 Note: All admin endpoints require authentication');
 
-  // Initialize payment gateways after server starts (ensures DB connection is ready)
-  (async () => {
-    try {
-      await paymentGatewayFactory.initialize();
-      console.log('✅ Payment gateways initialized (server.js)');
-    } catch (err) {
-      console.error('❌ Failed to initialize payment gateways:', err?.message || err);
-    }
-  })();
-});
+    // Initialize payment gateways after server starts (ensures DB connection is ready)
+    (async () => {
+      try {
+        await paymentGatewayFactory.initialize();
+        console.log('✅ Payment gateways initialized (server.js)');
+      } catch (err) {
+        console.error('❌ Failed to initialize payment gateways:', err?.message || err);
+      }
+    })();
+  });
+}
 
 module.exports = app;

@@ -208,7 +208,7 @@ const paymentGatewaySchema = new mongoose.Schema({
 });
 
 // Indexes
-paymentGatewaySchema.index({ gatewayName: 1 });
+// paymentGatewaySchema.index({ gatewayName: 1 }); // Duplicate of field-level unique: true; commented out to avoid duplicate index
 paymentGatewaySchema.index({ isActive: 1 });
 paymentGatewaySchema.index({ 'supportedCurrencies': 1 });
 

@@ -227,7 +227,7 @@ const shipmentSchema = new mongoose.Schema({
 });
 
 // Indexes
-shipmentSchema.index({ trackingNumber: 1 });
+// shipmentSchema.index({ trackingNumber: 1 }); // Duplicate of field-level unique: true
 shipmentSchema.index({ order: 1 });
 shipmentSchema.index({ shippingProvider: 1 });
 shipmentSchema.index({ 'tracking.status': 1 });
