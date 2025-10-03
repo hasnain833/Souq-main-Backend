@@ -3,16 +3,23 @@ const BasePaymentService = require('./BasePaymentService');
 class PayPalService extends BasePaymentService {
   constructor(config) {
     super(config);
-    this.clientId = process.env.PAYPAL_CLIENT_ID || 'AdraJpY7VmlPxbdmz_5Ray_RGXBrR0TJUwBZERK1-nsSL7jl6SCYOSz7ODfD_E8ypsYaO3hwPYknYV97';
-    this.clientSecret = process.env.PAYPAL_CLIENT_SECRET || 'EC1We1vq0N-suW-R9qQbmHgWI1EWTLri0jDUgRXOtm-9WyD3xs3EnzSdiDs76crOIRgHJ6KqTsiA1sMe';
+    // Read credentials from environment only (no fallbacks/hardcoded defaults)
+    this.clientId = process.env.PAYPAL_CLIENT_ID;
+    this.clientSecret = process.env.PAYPAL_CLIENT_SECRET;
 
-    // this.clientId = config.configuration?.paypal?.clientId;
-    // this.clientSecret = config.configuration?.paypal?.clientSecret;
-    this.environment = config.configuration?.paypal?.environment || 'sandbox';
+    // Determine environment from env var (defaults to sandbox)
+    const env = (process.env.PAYPAL_ENV || 'sandbox').toLowerCase();
+    this.environment = env === 'production' ? 'production' : 'sandbox';
 
+    // Set base URL by environment
     this.baseUrl = this.environment === 'production'
       ? 'https://api.paypal.com'
       : 'https://api.sandbox.paypal.com';
+
+    // Validate required env vars
+    if (!this.clientId || !this.clientSecret) {
+      throw new Error('PayPal configuration error: PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET must be set in environment variables');
+    }
 
     this.accessToken = null;
     this.tokenExpiry = null;

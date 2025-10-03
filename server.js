@@ -5,7 +5,7 @@ const path = require('path');
 const passport = require('passport');
 require('./utils/passport');
 const connectDB = require('./db');
-// const paymentGatewayFactory = require('./services/payment/PaymentGatewayFactory'); // disabled temporarily
+const paymentGatewayFactory = require('./services/payment/PaymentGatewayFactory');
 
 // Create main app
 const app = express();
@@ -22,7 +22,6 @@ if (!process.env.VERCEL) {
 // CORS setup
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || process.env.FRONTEND_URL || 'https://souq-frontend.vercel.app'; // fallback to production frontend
 const isProduction = process.env.NODE_ENV === 'production';
-
 const devAllowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
@@ -78,6 +77,7 @@ app.use(passport.initialize());
 const userAuthRoutes = require('./app/user/auth/routes/userAuthRoutes');
 const productRoutes = require('./app/user/product/routes/productRoutes');
 const orderRoutes = require('./app/user/shipping/routes/orderRoutes');
+const standardPaymentRoutes = require('./app/user/payments/routes/standardPaymentRoutes'); // re-enabled for E2E payments testing
 
 // Auth (login/signup)
 app.use('/api/user/auth', userAuthRoutes);
@@ -89,6 +89,9 @@ app.use('/api/user/products', productRoutes); // alias path for plural form
 // Ordering system
 app.use('/api/user/orders', orderRoutes);
 
+// Payments (Standard, includes PayPal)
+app.use('/api/user/payments', standardPaymentRoutes);
+
 // Admin API routes — disabled temporarily
 // const adminRoutes = require('./app/admin');
 // app.use('/api/admin', adminRoutes);
@@ -97,9 +100,9 @@ app.use('/api/user/orders', orderRoutes);
 // const webhookRoutes = require('./app/webhooks');
 // app.use('/webhooks', webhookRoutes);
 
-// Payments / Escrow — disabled temporarily
-// const escrowPaymentRoutes = require('./app/user/payments/routes/escrowPaymentRoutes');
-// app.use('/api/user/escrow', escrowPaymentRoutes);
+// Payments / Escrow — enable full escrow API (routes include create, initialize, webhooks)
+const escrowRoutes = require('./app/user/escrow/routes/escrowRoutes');
+app.use('/api/user/escrow', escrowRoutes);
 
 
 // Health check endpoint
@@ -159,15 +162,15 @@ if (!process.env.VERCEL) {
     console.log('');
     console.log('🔧 Minimal backend mode: only auth, product, and orders are enabled');
 
-    // Initialize payment gateways — disabled temporarily
-    // (async () => {
-    //   try {
-    //     await paymentGatewayFactory.initialize();
-    //     console.log('✅ Payment gateways initialized (server.js)');
-    //   } catch (err) {
-    //     console.error('❌ Failed to initialize payment gateways:', err?.message || err);
-    //   }
-    // })();
+    // Initialize payment gateways
+    (async () => {
+      try {
+        await paymentGatewayFactory.initialize();
+        console.log('✅ Payment gateways initialized (server.js)');
+      } catch (err) {
+        console.error('❌ Failed to initialize payment gateways:', err?.message || err);
+      }
+    })();
   });
 }
 
