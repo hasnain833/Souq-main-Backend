@@ -4,7 +4,6 @@ const profileController = require('../controllers/profileController')
 const verifyToken = require('../../../../utils/verifyToken')
 const createUploader = require('../../../../utils/upload');
 const optionalAuth = require('../../../../utils/optionalAuth');
-const upload = createUploader('profile'); // pass the target folder name here
 
 
 router.get('/', verifyToken, profileController.getProfile);
@@ -14,7 +13,14 @@ router.put('/update-profile', verifyToken, profileController.updateProfile);
 router.delete('/delete-Profile', verifyToken, profileController.deleteUser);
 // router.post('/upload-profile',verifyToken,upload.single('profile_image'),profileController.uploadProfile);
 
-router.post('/upload-profile', verifyToken, upload.single('profile'), profileController.uploadProfile);
+// Lazily create uploader to avoid FS usage at import time in serverless
+router.post('/upload-profile', verifyToken, (req, res, next) => {
+  const upload = createUploader('profile');
+  upload.single('profile')(req, res, (err) => {
+    if (err) return next(err);
+    next();
+  });
+}, profileController.uploadProfile);
 
 router.get('/:userId', optionalAuth, profileController.getAnotherUserProfile);
 

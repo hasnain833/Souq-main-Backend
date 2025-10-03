@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const verifyToken = require('../../../../utils/verifyToken')
 const createUploader = require('../../../../utils/upload');
-const uploadProduct = createUploader('products')
 const productController = require('../controllers/productController')
 const optionalAuth = require('../../../../utils/optionalAuth')
 
@@ -15,7 +14,13 @@ router.get('/all', optionalAuth, productController.getAllProducts);
 
 // === Product creation/update ===
 router.post('/sell', verifyToken, productController.sellProduct);
-router.post('/sell-product', verifyToken, uploadProduct.array('product_photos', 5), productController.sellProductByFormdata);
+router.post('/sell-product', verifyToken, (req, res, next) => {
+  const upload = createUploader('products');
+  upload.array('product_photos', 5)(req, res, (err) => {
+    if (err) return next(err);
+    next();
+  });
+}, productController.sellProductByFormdata);
 
 // === Specific parameterized routes ===
 router.put('/:id/status', verifyToken, productController.updateProductStatus);
@@ -29,7 +34,13 @@ router.post('/:productId/mark-reserved', verifyToken, productController.markAsRe
 router.post('/:productId/reactivate', verifyToken, productController.reactivateProduct);
 
 // === General parameterized routes (must be last) ===
-router.put('/:id', verifyToken, uploadProduct.array('product_photos', 5), productController.updateProduct);
+router.put('/:id', verifyToken, (req, res, next) => {
+  const upload = createUploader('products');
+  upload.array('product_photos', 5)(req, res, (err) => {
+    if (err) return next(err);
+    next();
+  });
+}, productController.updateProduct);
 router.delete('/:id', verifyToken, productController.deleteProduct);
 router.get('/:id', optionalAuth, productController.getProduct); 
 

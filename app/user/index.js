@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const userAuthRoutes = require('./auth/routes/userAuthRoutes');
 const userSocialAuthRoutes = require('./auth/routes/userSocialAuthRoutes');
-const profileRoutes = require('./profile/routes/profileRoutes');
 const productRoutes = require('./product/routes/productRoutes');
 const generalRoutes = require('./general/routes/generalRoutes');
 const chatRoutes = require('./chat/routes/chatRoutes');
@@ -13,36 +12,26 @@ const cardRoutes = require('./cards/routes/cardRoutes');
 const standardPaymentRoutes = require('./payments/routes/standardPaymentRoutes');
 const paymentMethodRoutes = require('./payments/routes/paymentMethodRoutes');
 const bankAccountRoutes = require('./bankAccounts/routes/bankAccountRoutes');
-const addressRoutes = require('./addresses/routes/addressRoutes');
-const shippingRoutes = require('./shipping/routes/shippingRoutes');
-const orderRoutes = require('./shipping/routes/orderRoutes');
-const ratingRoutes = require('./rating/routes/ratingRoutes');
-const walletRoutes = require('./wallet/routes/walletRoutes');
-const locationRoutes = require('./location/routes/locationRoutes');
-const transactionRoutes = require('./transaction/routes/transactionRoutes');
-const notificationRoutes = require('./notifications/routes/notificationRoutes');
-const seoRoutes = require('./seo/routes/seoRoutes');
-const sessionRoutes = require('./session/routes/sessionRoutes');
-const suggestionRoutes = require('./suggestion/routes/suggestionRoutes');
-const personalizationRoutes = require('./personalization/personalizationRoutes/personalizationRoutes');
-
-router.use('/suggestions', suggestionRoutes);
-router.use('/personalization', personalizationRoutes);
-router.use('/sessions', sessionRoutes);
-
 
 //User Auth APIs
 router.use('/auth', userAuthRoutes);
 router.use('/auth', userSocialAuthRoutes);
 
-//User Profile APIs
-router.use('/profile', profileRoutes);
+// User Profile APIs (gate under MINIMAL_MODE to avoid uploader FS on serverless)
+const MINIMAL_MODE = process.env.MINIMAL_MODE === 'true';
+if (MINIMAL_MODE) {
+  router.use('/profile', (req, res) => {
+    res.status(503).json({ success: false, message: 'Profile APIs temporarily disabled in MINIMAL_MODE' });
+  });
+} else {
+  const profileRoutes = require('./profile/routes/profileRoutes');
+  router.use('/profile', profileRoutes);
+}
 
 //User Sell Product APIS
 router.use('/product', productRoutes);
 
 //User Chat APIs
-router.use('/chat', chatRoutes);
 
 //User Offer APIs
 router.use('/offer', offerRoutes);
