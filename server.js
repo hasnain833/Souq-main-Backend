@@ -20,7 +20,7 @@ if (!process.env.VERCEL) {
 }
 
 // CORS setup
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || process.env.FRONTEND_URL; // e.g., https://souq-frontend.vercel.app
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || process.env.FRONTEND_URL || 'https://souq-frontend.vercel.app'; // fallback to production frontend
 const isProduction = process.env.NODE_ENV === 'production';
 
 const devAllowedOrigins = [
@@ -57,7 +57,16 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+
+// Global OPTIONS preflight handler (must be before routes)
+app.use((req, res, next) => {
+  if (req.method !== 'OPTIONS') return next();
+
+  // Delegate header setting/validation to cors middleware, then force 204 No Content
+  cors(corsOptions)(req, res, () => {
+    res.sendStatus(204);
+  });
+});
 app.use(express.json());
 app.use(passport.initialize());
 
