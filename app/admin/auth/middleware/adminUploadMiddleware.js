@@ -2,7 +2,7 @@ const createUploader = require('../../../../utils/upload');
 
 // Admin profile picture uploader - reuse existing upload utility
 // The upload utility will use req.user.id, so we need to set req.user from req.admin
-const adminProfileUploader = createUploader('admin-profiles');
+// Lazily create uploader inside the middleware to avoid FS access at import time
 
 // Middleware to set req.user from req.admin for upload compatibility
 const setUserFromAdmin = (req, res, next) => {
@@ -17,7 +17,16 @@ const setUserFromAdmin = (req, res, next) => {
 };
 
 // Combined middleware for admin profile upload
-const uploadAdminProfile = [setUserFromAdmin, adminProfileUploader.single('profile')];
+const uploadAdminProfile = [
+  setUserFromAdmin,
+  (req, res, next) => {
+    const uploader = createUploader('admin-profiles');
+    uploader.single('profile')(req, res, (err) => {
+      if (err) return next(err);
+      next();
+    });
+  }
+];
 
 // Middleware for single profile picture upload
 exports.uploadAdminProfile = uploadAdminProfile;
