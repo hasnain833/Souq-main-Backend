@@ -5,7 +5,7 @@ const path = require('path');
 const passport = require('passport');
 require('./utils/passport');
 const connectDB = require('./db');
-const paymentGatewayFactory = require('./services/payment/PaymentGatewayFactory');
+// const paymentGatewayFactory = require('./services/payment/PaymentGatewayFactory'); // disabled temporarily
 
 // Create main app
 const app = express();
@@ -61,8 +61,6 @@ app.use(cors(corsOptions));
 // Global OPTIONS preflight handler (must be before routes)
 app.use((req, res, next) => {
   if (req.method !== 'OPTIONS') return next();
-
-  // Delegate header setting/validation to cors middleware, then force 204 No Content
   cors(corsOptions)(req, res, () => {
     res.sendStatus(204);
   });
@@ -70,46 +68,38 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(passport.initialize());
 
-// Minimal mode: temporarily disable heavy integrations/routes (useful on Vercel)
-const MINIMAL_MODE = process.env.MINIMAL_MODE === 'true';
-if (MINIMAL_MODE) {
-  const disabledPrefixes = [
-    '/webhooks',
-    '/api/user/escrow',
-    '/api/user/payment',
-    '/api/user/payments',
-    '/api/admin',
-    '/uploads'
-  ];
-  app.use((req, res, next) => {
-    if (disabledPrefixes.some(p => req.path.startsWith(p))) {
-      return res.status(503).json({
-        success: false,
-        message: 'Temporarily disabled in MINIMAL_MODE',
-        path: req.originalUrl
-      });
-    }
-    next();
-  });
-}
+// Minimal backend: only expose core flows (auth, product, orders)
+// All other routes are disabled temporarily for Vercel testing
 
-// Serve static files (images, uploads)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve static files (images, uploads) — disabled temporarily
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// User API routes
-const userRoutes = require('./app/user');
-app.use('/api/user', userRoutes);
+// User API routes (minimal): expose only auth, product, and orders
+const userAuthRoutes = require('./app/user/auth/routes/userAuthRoutes');
+const productRoutes = require('./app/user/product/routes/productRoutes');
+const orderRoutes = require('./app/user/shipping/routes/orderRoutes');
 
-// Admin API routes
-const adminRoutes = require('./app/admin');
-app.use('/api/admin', adminRoutes);
+// Auth (login/signup)
+app.use('/api/user/auth', userAuthRoutes);
 
-// Webhook routes (no authentication required)
-const webhookRoutes = require('./app/webhooks');
-app.use('/webhooks', webhookRoutes);
-const escrowPaymentRoutes = require('./app/user/payments/routes/escrowPaymentRoutes')
-app.use(express.json())
-app.use('/api/user/escrow', escrowPaymentRoutes);
+// Product system
+app.use('/api/user/product', productRoutes); // note: existing codebase uses singular 'product'
+app.use('/api/user/products', productRoutes); // alias path for plural form
+
+// Ordering system
+app.use('/api/user/orders', orderRoutes);
+
+// Admin API routes — disabled temporarily
+// const adminRoutes = require('./app/admin');
+// app.use('/api/admin', adminRoutes);
+
+// Webhook routes — disabled temporarily
+// const webhookRoutes = require('./app/webhooks');
+// app.use('/webhooks', webhookRoutes);
+
+// Payments / Escrow — disabled temporarily
+// const escrowPaymentRoutes = require('./app/user/payments/routes/escrowPaymentRoutes');
+// app.use('/api/user/escrow', escrowPaymentRoutes);
 
 
 // Health check endpoint
@@ -118,8 +108,7 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     timestamp: new Date().toISOString(),
     services: {
-      user: 'running',
-      admin: 'running'
+      user: 'running'
     }
   });
 });
@@ -163,31 +152,22 @@ app.use((req, res) => {
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`🚀 SOUQ Marketplace API running on http://localhost:${PORT}`);
-    console.log(`📊 User API: http://localhost:${PORT}/api/user`);
-    console.log(`⚙️ Admin API: http://localhost:${PORT}/api/admin`);
+    console.log(`📊 User Auth: http://localhost:${PORT}/api/user/auth`);
+    console.log(`🛍️ Product: http://localhost:${PORT}/api/user/product`);
+    console.log(`🧾 Orders: http://localhost:${PORT}/api/user/orders`);
     console.log(`❤️ Health Check: http://localhost:${PORT}/health`);
     console.log('');
-    console.log('📋 Admin API Endpoints:');
-    console.log(`   📦 Orders: http://localhost:${PORT}/api/admin/orders`);
-    console.log(`   📊 Order Stats: http://localhost:${PORT}/api/admin/orders/stats`);
-    console.log(`   🛡️ Escrow Orders: http://localhost:${PORT}/api/admin/orders/method/escrow`);
-    console.log(`   💳 Standard Orders: http://localhost:${PORT}/api/admin/orders/method/standard`);
-    console.log(`   ⭐ Ratings: http://localhost:${PORT}/api/admin/ratings`);
-    console.log(`   📊 Rating Stats: http://localhost:${PORT}/api/admin/ratings/stats`);
-    console.log(`   🚨 Reports: http://localhost:${PORT}/api/admin/reports`);
-    console.log(`   📊 Report Stats: http://localhost:${PORT}/api/admin/reports/stats`);
-    console.log('');
-    console.log('💡 Note: All admin endpoints require authentication');
+    console.log('🔧 Minimal backend mode: only auth, product, and orders are enabled');
 
-    // Initialize payment gateways after server starts (ensures DB connection is ready)
-    (async () => {
-      try {
-        await paymentGatewayFactory.initialize();
-        console.log('✅ Payment gateways initialized (server.js)');
-      } catch (err) {
-        console.error('❌ Failed to initialize payment gateways:', err?.message || err);
-      }
-    })();
+    // Initialize payment gateways — disabled temporarily
+    // (async () => {
+    //   try {
+    //     await paymentGatewayFactory.initialize();
+    //     console.log('✅ Payment gateways initialized (server.js)');
+    //   } catch (err) {
+    //     console.error('❌ Failed to initialize payment gateways:', err?.message || err);
+    //   }
+    // })();
   });
 }
 
