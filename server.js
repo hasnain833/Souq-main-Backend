@@ -11,24 +11,26 @@ const paymentGatewayFactory = require('./services/payment/PaymentGatewayFactory'
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy so Secure cookies work on Vercel/HTTPS
+app.set('trust proxy', 1);
+
 // Connect to database (skip in Vercel serverless; api/index.js handles it per-invocation)
 if (!process.env.VERCEL) {
   connectDB();
 }
 
 // CORS setup
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || process.env.FRONTEND_URL;
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || process.env.FRONTEND_URL; // e.g., https://souq-frontend.vercel.app
 const isProduction = process.env.NODE_ENV === 'production';
 
 const devAllowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
-  'https://souq-frontend.vercel.app/'
 ];
-1
+
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (e.g., curl, mobile apps)
+    // Allow requests with no origin (e.g., curl, server-to-server)
     if (!origin) return callback(null, true);
 
     if (isProduction) {
@@ -38,7 +40,7 @@ const corsOptions = {
       return callback(null, origin === FRONTEND_ORIGIN);
     }
 
-    // Development: allow localhost Vite dev servers and FRONTEND_ORIGIN if provided
+    // Development: allow localhost and optional configured frontend
     if (devAllowedOrigins.includes(origin)) return callback(null, true);
     if (FRONTEND_ORIGIN && origin === FRONTEND_ORIGIN) return callback(null, true);
 
