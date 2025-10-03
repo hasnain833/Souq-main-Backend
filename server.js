@@ -11,8 +11,10 @@ const paymentGatewayFactory = require('./services/payment/PaymentGatewayFactory'
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to database
-connectDB();
+// Connect to database (skip in Vercel serverless; api/index.js handles it per-invocation)
+if (!process.env.VERCEL) {
+  connectDB();
+}
 
 // CORS setup
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || process.env.FRONTEND_URL;
@@ -56,6 +58,29 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(passport.initialize());
+
+// Minimal mode: temporarily disable heavy integrations/routes (useful on Vercel)
+const MINIMAL_MODE = process.env.MINIMAL_MODE === 'true';
+if (MINIMAL_MODE) {
+  const disabledPrefixes = [
+    '/webhooks',
+    '/api/user/escrow',
+    '/api/user/payment',
+    '/api/user/payments',
+    '/api/admin',
+    '/uploads'
+  ];
+  app.use((req, res, next) => {
+    if (disabledPrefixes.some(p => req.path.startsWith(p))) {
+      return res.status(503).json({
+        success: false,
+        message: 'Temporarily disabled in MINIMAL_MODE',
+        path: req.originalUrl
+      });
+    }
+    next();
+  });
+}
 
 // Serve static files (images, uploads)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
