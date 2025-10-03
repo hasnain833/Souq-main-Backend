@@ -13,9 +13,12 @@ module.exports = async (req, res) => {
     console.error('DB connect error in serverless handler:', err?.message || err);
   }
 
-  // On Vercel, the function is mounted under "/api". Vercel strips that prefix
-  // before invoking the function. Our Express app defines routes starting with
-  // "/api/...". Setting basePath ensures route matching works as expected.
-  const handler = serverless(app, { basePath: '/api' });
+  // Vercel routes functions under "/api" but strips that prefix before calling us,
+  // so requests arrive like "/user/..." while our Express app expects "/api/user/...".
+  if (req.url && !req.url.startsWith('/api')) {
+    req.url = `/api${req.url}`;
+  }
+
+  const handler = serverless(app);
   return handler(req, res);
 };
