@@ -10,19 +10,19 @@ const productSchema = new mongoose.Schema({
   product_photos: [
     {
       type: String, // URLs or paths
-    //   required: true,
+      required: true,
     }
   ],
   title: {
     type: String,
-    // required: true,
+    required: true,
     trim: true,
   },
   description: String,
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
-    // required: true,
+    required: true,
   },
   brand: String,
   size: String,

@@ -4,9 +4,9 @@ const Category = require('../db/models/categoryModel');
 
 const connectDB = async () => {
   try {
-    const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
+    const uri = process.env.MONGODB_URI;
     if (!uri) {
-      throw new Error('MONGO_URI or MONGODB_URI must be set');
+      throw new Error('MONGODB_URI must be set');
     }
     await mongoose.connect(uri);
     console.log('✅ MongoDB connected');

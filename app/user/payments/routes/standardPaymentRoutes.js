@@ -1,37 +1,3 @@
-// const express = require('express');
-// const router = express.Router();
-// const verifyToken = require('../../../../utils/verifyToken');
-// const standardPaymentController = require('../controllers/standardPaymentController');
-// const webhookController = require('../controllers/webhookController');
-
-// // Public routes
-// router.use('/webhook', express.raw({ type: 'application/json' })); // Raw body for webhooks
-// router.post('/webhook/:gateway', webhookController.handleStandardPaymentWebhook);
-// // Public: expose PayPal client id and client token for JS SDK
-// router.get('/paypal/client-id', standardPaymentController.getPayPalClientId);
-// router.get('/paypal/client-token', standardPaymentController.getPayPalClientToken);
-
-// // Protected routes (require auth)
-// router.use(verifyToken);
-
-// // Test endpoint
-// router.get('/test', standardPaymentController.testStandardPayment);
-
-// // Create standard payment
-// router.post('/create', standardPaymentController.createStandardPayment);
-
-// // Initialize payment with gateway
-// router.post('/:paymentId/initialize', standardPaymentController.initializeStandardPayment);
-
-// // Get payment details
-// router.get('/:paymentId', standardPaymentController.getStandardPayment);
-
-// // Check and update payment status from gateway
-// router.get('/:paymentId/check-payment-status', standardPaymentController.checkStandardPaymentStatus);
-
-// module.exports = router;
-
-
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../../../../utils/verifyToken');

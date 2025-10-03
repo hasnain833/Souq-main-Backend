@@ -41,107 +41,107 @@ const userSchema = new mongoose.Schema({
       return !this.isSocialLogin;
     }
   },
-  isSocialLogin: {
-    type: Boolean,
-    default: false
-  },
-  loginWithGoogle: {
-    type: Boolean,
-    default: false,
-  },
-  loginWithFacebook: {
-    type: Boolean,
-    default: false,
-  },
-  phone: {
-    type: String,
-    trim: true,
-    default: null
-  },
-  emailVerifiedAt: {
-    type: Date,
-    default: null
-  },
-  phoneVerifiedAt: {
-    type: Date,
-    default: null
-  },
-  about: {
-    type: String,
-    default: '',
-    maxlength: 1000
-  },
-  otp: {
-    type: String,
-    default: null
-  },
-  otpCreatedAt: {
-    type: Date,
-    default: null
-  },
-  gender: {
-    type: String,
-    enum: GENDERS,
-    // default: 'other'
-  },
-  dateOfBirth: {
-    type: Date,
-    default: null
-  },
-  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  country: {
-    type: String,
-    enum: COUNTRIES,
-    // default: 'IN'
-  },
-  city: {
-    type: String,
-    enum: CITIES,
-    // default: 'Mumbai'
-  },
-  street1: {
-    type: String
-  },
-  street2: {
-    type: String
-  },
-  zipCode: {
-    type: String
-  },
-  cityShow: {
-    type: Boolean,
-    default: true
-  },
-  language: {
-    type: String,
-    enum: LANGUAGES,
-    default: 'en'
-  },
-  vacationMode: {
-    type: Boolean,
-    default: false
-  },
-  refreshToken: {
-    type: String,
-    default: null
-  },
-  lastLoginAt: {
-    type: Date,
-    default: null
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  deletedAt: {
-    type: Date,
-    default: null
-  },
-    userNameUpdatedAt: {
-    type: Date,
-    default: null,
-  }
+  // isSocialLogin: {
+  //   type: Boolean,
+  //   default: false
+  // },
+  // loginWithGoogle: {
+  //   type: Boolean,
+  //   default: false,
+  // },
+  // loginWithFacebook: {
+  //   type: Boolean,
+  //   default: false,
+  // },
+  // phone: {
+  //   type: String,
+  //   trim: true,
+  //   default: null
+  // },
+  // emailVerifiedAt: {
+  //   type: Date,
+  //   default: null
+  // },
+  // phoneVerifiedAt: {
+  //   type: Date,
+  //   default: null
+  // },
+  // about: {
+  //   type: String,
+  //   default: '',
+  //   maxlength: 1000
+  // },
+  // otp: {
+  //   type: String,
+  //   default: null
+  // },
+  // otpCreatedAt: {
+  //   type: Date,
+  //   default: null
+  // },
+  // gender: {
+  //   type: String,
+  //   enum: GENDERS,
+  //   // default: 'other'
+  // },
+  // dateOfBirth: {
+  //   type: Date,
+  //   default: null
+  // },
+  // followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  // following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  // country: {
+  //   type: String,
+  //   enum: COUNTRIES,
+  //   // default: 'IN'
+  // },
+  // city: {
+  //   type: String,
+  //   enum: CITIES,
+  //   // default: 'Mumbai'
+  // },
+  // street1: {
+  //   type: String
+  // },
+  // street2: {
+  //   type: String
+  // },
+  // zipCode: {
+  //   type: String
+  // },
+  // cityShow: {
+  //   type: Boolean,
+  //   default: true
+  // },
+  // language: {
+  //   type: String,
+  //   enum: LANGUAGES,
+  //   default: 'en'
+  // },
+  // vacationMode: {
+  //   type: Boolean,
+  //   default: false
+  // },
+  // refreshToken: {
+  //   type: String,
+  //   default: null
+  // },
+  // lastLoginAt: {
+  //   type: Date,
+  //   default: null
+  // },
+  // createdAt: {
+  //   type: Date,
+  //   default: Date.now
+  // },
+  // deletedAt: {
+  //   type: Date,
+  //   default: null
+  // },
+  //   userNameUpdatedAt: {
+  //   type: Date,
+  //   default: null,
+  // }
 
 },{ 
   id: false, 

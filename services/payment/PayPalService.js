@@ -17,11 +17,6 @@ class PayPalService extends BasePaymentService {
     this.accessToken = null;
     this.tokenExpiry = null;
   }
-
-  /**
-   * Get PayPal access token
-   * @returns {Promise<string>} Access token
-   */
   async getAccessToken() {
     try {
       // Check if current token is still valid
@@ -55,11 +50,6 @@ class PayPalService extends BasePaymentService {
     }
   }
 
-  /**
-   * Initialize payment with PayPal
-   * @param {Object} paymentData - Payment details
-   * @returns {Promise<Object>} Payment initialization response
-   */
   async initializePayment(paymentData) {
     try {
       const validation = this.validatePaymentData(paymentData);
@@ -151,12 +141,6 @@ class PayPalService extends BasePaymentService {
       };
     }
   }
-
-  /**
-   * Capture PayPal payment
-   * @param {string} orderId - PayPal order ID
-   * @returns {Promise<Object>} Capture response
-   */
   async capturePayment(orderId) {
     try {
       const accessToken = await this.getAccessToken();
@@ -202,11 +186,6 @@ class PayPalService extends BasePaymentService {
       };
     }
   }
-
-  /**
-   * Generate client token for Hosted Fields / ACDC
-   * @returns {Promise<{success:boolean, clientToken?:string, error?:string}>}
-   */
   async generateClientToken() {
     try {
       // Use Basic auth per PayPal docs
@@ -231,11 +210,6 @@ class PayPalService extends BasePaymentService {
     }
   }
 
-  /**
-   * Verify payment status with PayPal
-   * @param {string} transactionId - PayPal order ID
-   * @returns {Promise<Object>} Payment status
-   */
   async verifyPayment(transactionId) {
     try {
       const accessToken = await this.getAccessToken();
@@ -281,12 +255,6 @@ class PayPalService extends BasePaymentService {
       };
     }
   }
-
-  /**
-   * Process refund with PayPal
-   * @param {Object} refundData - Refund details
-   * @returns {Promise<Object>} Refund response
-   */
   async processRefund(refundData) {
     try {
       const accessToken = await this.getAccessToken();
@@ -338,11 +306,6 @@ class PayPalService extends BasePaymentService {
     }
   }
 
-  /**
-   * Handle PayPal webhook
-   * @param {Object} webhookData - Webhook payload
-   * @returns {Promise<Object>} Processed webhook data
-   */
   async handleWebhook(webhookData) {
     try {
       const { event_type, resource } = webhookData;
@@ -397,12 +360,6 @@ class PayPalService extends BasePaymentService {
       };
     }
   }
-
-  /**
-   * Map PayPal payment status to standard status
-   * @param {string} paypalStatus - PayPal status
-   * @returns {string} Standardized status
-   */
   mapPaymentStatus(paypalStatus) {
     const statusMap = {
       'CREATED': 'processing',
@@ -416,10 +373,6 @@ class PayPalService extends BasePaymentService {
     return statusMap[paypalStatus] || 'unknown';
   }
 
-  /**
-   * Get PayPal specific configuration
-   * @returns {Object} Configuration details
-   */
   getGatewayConfig() {
     return {
       gatewayName: 'paypal',
@@ -431,10 +384,6 @@ class PayPalService extends BasePaymentService {
     };
   }
 
-  /**
-   * Test gateway connection
-   * @returns {Promise<Object>} Connection test result
-   */
   async testConnection() {
     try {
       const accessToken = await this.getAccessToken();

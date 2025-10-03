@@ -7,9 +7,6 @@ const { creditWalletInternal } = require('../../wallet/controllers/walletControl
 const PaymentCompletionService = require('../../../../services/payment/PaymentCompletionService');
 const currencyService = require('../../../../services/currency/CurrencyService');
 
-/**
- * Test endpoint for standard payments
- */
 exports.testStandardPayment = async (req, res) => {
   try {
     console.log('🧪 Standard payment test endpoint called');
@@ -23,9 +20,7 @@ exports.testStandardPayment = async (req, res) => {
   }
 };
 
-/**
- * Public: return PayPal client id for loading JS SDK
- */
+
 exports.getPayPalClientId = async (req, res) => {
   try {
     // Payment gateway factory is already required at top
@@ -45,9 +40,7 @@ exports.getPayPalClientId = async (req, res) => {
   }
 };
 
-/**
- * Public: generate PayPal client token for Hosted/Card Fields
- */
+
 exports.getPayPalClientToken = async (req, res) => {
   try {
     const gateway = paymentGatewayFactory.getGateway('paypal');
@@ -67,9 +60,6 @@ exports.getPayPalClientToken = async (req, res) => {
 
 
 
-/**
- * Create a standard payment transaction
- */
 exports.createStandardPayment = async (req, res) => {
   try {
     console.log('🔄 Create standard payment request received');
