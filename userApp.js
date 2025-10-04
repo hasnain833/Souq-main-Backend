@@ -9,7 +9,8 @@ const initSocket = require('./utils/socket');
 const http = require('http');
 const { startScheduler, setSocketIO: setSchedulerSocketIO } = require('./utils/scheduler');
 const paymentGatewayFactory = require('./services/payment/PaymentGatewayFactory');
-const escrowScheduler = require('./services/scheduler/EscrowScheduler');
+// ESCROW_DISABLED: Escrow scheduler disabled for now.
+// const escrowScheduler = require('./services/scheduler/EscrowScheduler');
 const currencyService = require('./services/currency/CurrencyService');
 const shippingFactory = require('./services/shipping/ShippingServiceFactory');
 
@@ -84,11 +85,9 @@ async function initializeEscrowSystem() {
     // Initialize shipping providers
     await shippingFactory.initialize();
 
-    // Set socket instance for escrow scheduler
-    escrowScheduler.setSocketIO(io);
-
-    // Start escrow scheduler
-    escrowScheduler.start();
+    // ESCROW_DISABLED: Skip escrow scheduler wiring and start.
+    // escrowScheduler.setSocketIO(io);
+    // escrowScheduler.start();
 
     // Start currency service auto-update
     currencyService.startAutoUpdate();

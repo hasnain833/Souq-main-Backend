@@ -63,6 +63,11 @@ exports.getPayPalClientToken = async (req, res) => {
 exports.createStandardPayment = async (req, res) => {
   try {
     console.log('🔄 Create standard payment request received');
+    // Guard: ensure authenticated user is present
+    if (!req.user || !req.user._id) {
+      console.error('❌ Missing authenticated user on request');
+      return errorResponse(res, 'Unauthorized: user not authenticated', 401);
+    }
     const buyerId = req.user._id;
     const {
       productId,
@@ -121,7 +126,16 @@ exports.createStandardPayment = async (req, res) => {
       return errorResponse(res, `Product is not available for purchase (status: ${product.status})`, 400);
     }
 
-    const sellerId = product.user._id;
+    // Ensure product has a seller and handle both populated doc and ObjectId
+    if (!product.user) {
+      console.error('❌ Product has no seller associated:', productId);
+      return errorResponse(res, 'Product seller information is missing', 400);
+    }
+    const sellerId = product.user && product.user._id ? product.user._id : product.user; // support populated or raw ObjectId
+    if (!sellerId) {
+      console.error('❌ Unable to resolve sellerId from product.user:', product.user);
+      return errorResponse(res, 'Unable to resolve seller for product', 500);
+    }
     console.log('🔍 Seller ID:', sellerId);
 
     // Check if buyer is not the seller

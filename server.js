@@ -67,17 +67,20 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(passport.initialize());
 
-// Minimal backend: only expose core flows (auth, product, orders)
-// All other routes are disabled temporarily for Vercel testing
+// Minimal backend: expose core flows (auth, product, orders) plus profile and notifications needed by frontend
+// Other routes remain disabled
 
-// Serve static files (images, uploads) — disabled temporarily
-// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve static files (images, uploads)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// User API routes (minimal): expose only auth, product, and orders
+// User API routes
 const userAuthRoutes = require('./app/user/auth/routes/userAuthRoutes');
 const productRoutes = require('./app/user/product/routes/productRoutes');
 const orderRoutes = require('./app/user/shipping/routes/orderRoutes');
 const standardPaymentRoutes = require('./app/user/payments/routes/standardPaymentRoutes'); // re-enabled for E2E payments testing
+const profileRoutes = require('./app/user/profile/routes/profileRoutes');
+const notificationRoutes = require('./app/user/notifications/routes/notificationRoutes');
+const generalRoutes = require('./app/user/general/routes/generalRoutes');
 
 // Auth (login/signup)
 app.use('/api/user/auth', userAuthRoutes);
@@ -92,6 +95,15 @@ app.use('/api/user/orders', orderRoutes);
 // Payments (Standard, includes PayPal)
 app.use('/api/user/payments', standardPaymentRoutes);
 
+// Profile (member profile page requires this)
+app.use('/api/user/profile', profileRoutes);
+
+// Notifications (unread-count and others)
+app.use('/api/user/notifications', notificationRoutes);
+
+// General (categories, sizes)
+app.use('/api/user/general', generalRoutes);
+
 // Admin API routes — disabled temporarily
 // const adminRoutes = require('./app/admin');
 // app.use('/api/admin', adminRoutes);
@@ -100,9 +112,9 @@ app.use('/api/user/payments', standardPaymentRoutes);
 // const webhookRoutes = require('./app/webhooks');
 // app.use('/webhooks', webhookRoutes);
 
-// Payments / Escrow — enable full escrow API (routes include create, initialize, webhooks)
-const escrowRoutes = require('./app/user/escrow/routes/escrowRoutes');
-app.use('/api/user/escrow', escrowRoutes);
+// ESCROW_DISABLED: Escrow API temporarily disabled. Keeping code for future use.
+// const escrowRoutes = require('./app/user/escrow/routes/escrowRoutes');
+// app.use('/api/user/escrow', escrowRoutes);
 
 
 // Health check endpoint

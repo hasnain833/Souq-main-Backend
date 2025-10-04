@@ -8,9 +8,8 @@ const moment = require('moment');
 
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id)
-      .populate({ path: 'followers', select: '_id deletedAt' })
-      .populate({ path: 'following', select: '_id deletedAt' });
+    // Followers/following are disabled in minimal schema; fetch user without populates
+    const user = await User.findById(req.user._id);
 
     if (!user) {
       return res.status(404).json({

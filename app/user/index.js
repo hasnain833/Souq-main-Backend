@@ -6,7 +6,8 @@ const productRoutes = require('./product/routes/productRoutes');
 const generalRoutes = require('./general/routes/generalRoutes');
 const chatRoutes = require('./chat/routes/chatRoutes');
 const offerRoutes = require('./offer/routes/offerRoutes');
-const escrowRoutes = require('./escrow/routes/escrowRoutes');
+// ESCROW_DISABLED: Escrow routes temporarily disabled. Keeping import commented for future use.
+// const escrowRoutes = require('./escrow/routes/escrowRoutes');
 const currencyRoutes = require('./currency/routes/currencyRoutes');
 const cardRoutes = require('./cards/routes/cardRoutes');
 const standardPaymentRoutes = require('./payments/routes/standardPaymentRoutes');
@@ -46,8 +47,8 @@ router.use('/chat', chatRoutes);
 //User Offer APIs
 router.use('/offer', offerRoutes);
 
-//User Escrow APIs
-router.use('/escrow', escrowRoutes);
+// ESCROW_DISABLED: Escrow APIs are turned off for now.
+// router.use('/escrow', escrowRoutes);
 
 //User Currency APIs
 router.use('/currency', currencyRoutes);

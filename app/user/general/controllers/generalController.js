@@ -4,7 +4,13 @@ const SizeChart = require('../../../../db/models/sizeChartModel')
 // Get All Category
 exports.getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find();
+    const categories = await Category.find({}, {
+      name: 1,
+      subCategories: 1,
+      createdAt: 1
+    })
+      .lean()
+      .maxTimeMS(8000);
     return successResponse(res, 'Categories fetched', categories);
   } catch (error) {
     return errorResponse(res, 'Failed to fetch category', 500, error.message);
@@ -14,7 +20,10 @@ exports.getAllCategories = async (req, res) => {
 // Get One Main Category
 exports.getCategory = async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id);
+    const category = await Category.findById(req.params.id)
+      .select('name subCategories childCategories items createdAt')
+      .lean()
+      .maxTimeMS(8000);
     if (!category) return res.status(404).json({ message: 'Category not found' });
     return successResponse(res, 'Categories fetched', category);
     
@@ -29,9 +38,9 @@ exports.getSizesByChildCategory = async (req, res) => {
 
     let chart;
     if (childCategoryId) {
-      chart = await SizeChart.findOne({ "childCategory._id": childCategoryId });
+      chart = await SizeChart.findOne({ "childCategory._id": childCategoryId }).lean().maxTimeMS(8000);
     } else if (slug) {
-      chart = await SizeChart.findOne({ "childCategory.slug": slug });
+      chart = await SizeChart.findOne({ "childCategory.slug": slug }).lean().maxTimeMS(8000);
     }
 
     if (!chart) {

@@ -30,6 +30,14 @@ exports.buildProductReq = (userId, body, files) => {
 };
 
 
+const BASE_URL = process.env.BASE_URL || process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+const toAbsoluteUrl = (u) => {
+  if (!u) return u;
+  if (/^(https?:)?\/\//i.test(u)) return u;
+  const trimmed = String(u).startsWith('/') ? String(u).slice(1) : String(u);
+  return `${BASE_URL}/${trimmed}`;
+};
+
 exports.buildProductRes = (product) => {
   return {
     id: product._id,
@@ -47,7 +55,9 @@ exports.buildProductRes = (product) => {
     price: product.price,
     shipping_cost: product.shipping_cost,
     package_size: product.package_size,
-    product_photos: product.product_photos,
+    product_photos: Array.isArray(product.product_photos)
+      ? product.product_photos.map(toAbsoluteUrl)
+      : [],
     status: product.status,
     hide: product.hide,
     views: product.views || 0,
@@ -72,7 +82,9 @@ exports.getAllProductRes = (product) => {
     shipping_cost: product.shipping_cost,
     package_size: product.package_size,
     stauts: product.stauts,
-    product_photos: product.product_photos,
+    product_photos: Array.isArray(product.product_photos)
+      ? product.product_photos.map(toAbsoluteUrl)
+      : [],
     status: product.status,
     favoriteCount: product.favoritedBy ? product.favoritedBy.length : 0,
     views: product.views || 0,
@@ -102,7 +114,9 @@ exports.updateProductRes = (product) => {
     shipping_cost: product.shipping_cost,
     package_size: product.package_size,
     status: product.status,
-    product_photos: product.product_photos,
+    product_photos: Array.isArray(product.product_photos)
+      ? product.product_photos.map(toAbsoluteUrl)
+      : [],
     updatedAt: product.updatedAt,
   };
 };
@@ -122,7 +136,9 @@ exports.productRes = (product) => {
     shipping_cost: product.shipping_cost,
     package_size: product.package_size,
     stauts: product.stauts,
-    product_photos: product.product_photos,
+    product_photos: Array.isArray(product.product_photos)
+      ? product.product_photos.map(toAbsoluteUrl)
+      : [],
     status: product.status,
     hide: product.hide,
     favoriteCount: product.favoritedBy ? product.favoritedBy.length : 0,
