@@ -95,6 +95,15 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Indexes to optimize common queries
+// Fetching active products, sorting by createdAt, filtering by user/category/price, and favorites
+productSchema.index({ status: 1, createdAt: -1 });
+productSchema.index({ user: 1, createdAt: -1 });
+productSchema.index({ category: 1, createdAt: -1 });
+productSchema.index({ price: 1 });
+productSchema.index({ bumpedAt: -1 });
+productSchema.index({ favoritedBy: 1 });
+
 productSchema.statics.createProduct = async function (userId, data) {
   const product = new this({
     ...data,

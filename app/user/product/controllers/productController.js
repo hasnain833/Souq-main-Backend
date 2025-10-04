@@ -21,6 +21,7 @@ const Personalization = require("../../../../db/models/Personalization");
 const { UserRes } = require("../../profile/dto/user.dto");
 // const { paginateQuery } = require('../../../../utils/pagination');
 const NotificationService = require("../../../../services/NotificationService");
+const cache = require("../../../../utils/cache");
 
 exports.sellProduct = async (req, res) => {
   try {
@@ -590,6 +591,17 @@ exports.getAllProducts = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const isAuthenticated = !!req.user;
 
+    // Cache only for public (unauthenticated) requests
+    const cacheKey = !isAuthenticated
+      ? `products:all:v2:${sortBy}:${page}:${limit}:${JSON.stringify(req.query)}`
+      : null;
+    if (cacheKey) {
+      const cached = cache.get(cacheKey);
+      if (cached) {
+        return successResponse(res, "Products fetched successfully", cached);
+      }
+    }
+
     let query = await buildProductQuery(req.query);
     // ✅ Only include products created within the last N days (configurable)
     // Default to 30; if days <= 0, no cutoff filter is applied
@@ -697,14 +709,20 @@ exports.getAllProducts = async (req, res) => {
 
     const responseData = products.map(getAllProductRes);
 
-    return successResponse(res, "Products fetched successfully", {
+    const payload = {
       items: responseData,
       totalItems: responseData.length,
       total,
       currentPage: parseInt(page),
       totalPages: Math.ceil(total / limit),
       hasNextPage: skip + responseData.length < total,
-    });
+    };
+
+    if (cacheKey) {
+      cache.set(cacheKey, payload, 90_000); // 90s TTL
+    }
+
+    return successResponse(res, "Products fetched successfully", payload);
   } catch (error) {
     return errorResponse(res, "Failed to fetch products", 500, error.message);
   }

@@ -50,4 +50,10 @@ const categorySchema = new mongoose.Schema({
   subCategories: [subCategorySchema]
 }, { timestamps: true });
 
+// Useful indexes for category lookups
+categorySchema.index({ name: 1 });
+categorySchema.index({ slug: 1 });
+// Optional: if you frequently query child slugs
+// categorySchema.index({ 'subCategories.childCategories.slug': 1 });
+
 module.exports = mongoose.model('Category', categorySchema);

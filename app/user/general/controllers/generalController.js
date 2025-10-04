@@ -1,16 +1,22 @@
 const Category = require('../../../../db/models/categoryModel')
 const {successResponse , errorResponse} = require('../../../../utils/responseHandler')
 const SizeChart = require('../../../../db/models/sizeChartModel')
+const cache = require('../../../../utils/cache')
 // Get All Category
 exports.getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find({}, {
-      name: 1,
-      subCategories: 1,
-      createdAt: 1
-    })
-      .lean()
-      .maxTimeMS(8000);
+    const cacheKey = 'general:categories:v1';
+    let categories = cache.get(cacheKey);
+    if (!categories) {
+      categories = await Category.find({}, {
+        name: 1,
+        subCategories: 1,
+        createdAt: 1
+      })
+        .lean()
+        .maxTimeMS(8000);
+      cache.set(cacheKey, categories, 90_000); // 90s TTL
+    }
     return successResponse(res, 'Categories fetched', categories);
   } catch (error) {
     return errorResponse(res, 'Failed to fetch category', 500, error.message);

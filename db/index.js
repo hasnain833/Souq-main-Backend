@@ -4,11 +4,11 @@ async function connectDB() {
   const uri = process.env.MONGODB_URI;
 
   // Reuse connection across serverless invocations
-  if (!global.__mongoose_conn) {
-    global.__mongoose_conn = { conn: null, promise: null };
+  if (!global.mongoose) {
+    global.mongoose = { conn: null, promise: null };
   }
 
-  const cached = global.__mongoose_conn;
+  const cached = global.mongoose;
 
   // If we already have an open connection, reuse it
   if (cached.conn && mongoose.connection?.readyState === 1) {

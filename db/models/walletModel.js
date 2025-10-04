@@ -182,12 +182,6 @@ const walletSchema = new mongoose.Schema({
       type: Date,
       default: null
     }
-  },
-  
-  // Metadata
-  metadata: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {}
   }
 }, {
   timestamps: true,
@@ -196,9 +190,9 @@ const walletSchema = new mongoose.Schema({
 });
 
 // Indexes for performance
-walletSchema.index({ user: 1 });
+// Note: Unique index on `user` exists via field definition (unique: true), avoid duplicate simple index.
 // Remove the problematic index on transactions.transactionId to avoid null value conflicts
-// walletSchema.index({ 'transactions.transactionId': 1 }, { sparse: true }); // Commented out to fix duplicate key error
+// walletSchema.index({ 'transactions.transactionId': 1 }, { sparse: true });
 walletSchema.index({ 'transactions.createdAt': -1 });
 walletSchema.index({ 'transactions.type': 1 });
 // Add compound index for user and transaction queries

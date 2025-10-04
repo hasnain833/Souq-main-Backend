@@ -53,7 +53,7 @@ const corsOptions = {
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   exposedHeaders: ["Set-Cookie"],
-  optionsSuccessStatus: 200,
+  optionsSuccessStatus: 204,
 };
 
 app.use(cors(corsOptions));
@@ -64,7 +64,7 @@ app.options("*", cors(corsOptions));
 app.use((req, res, next) => {
   if (req.method !== "OPTIONS") return next();
   cors(corsOptions)(req, res, () => {
-    res.sendStatus(200);
+    res.sendStatus(204);
   });
 });
 app.use(express.json());
