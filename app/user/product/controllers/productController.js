@@ -688,7 +688,9 @@ exports.getAllProducts = async (req, res) => {
       },
     ];
 
-    const result = await Product.aggregate(pipeline);
+    const result = await Product.aggregate(pipeline)
+      .option({ allowDiskUse: true })
+      .exec();
 
     const products = result[0].data || [];
     const total = result[0].metadata.length ? result[0].metadata[0].total : 0;
