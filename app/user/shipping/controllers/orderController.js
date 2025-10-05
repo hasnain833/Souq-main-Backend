@@ -1,4 +1,6 @@
 const Order = require('../../../../db/models/orderModel');
+// Ensure referenced models are registered before populate calls
+require('../../../../db/models/offerModel');
 const Transaction = require('../../../../db/models/transactionModel');
 const StandardPayment = require('../../../../db/models/standardPaymentModel');
 const EscrowTransaction = require('../../../../db/models/escrowTransactionModel');
@@ -11,11 +13,7 @@ const OrderEmailService = require('../../../../services/OrderEmailService');
 const { findStandardPayment, findEscrowTransaction } = require('../../../../utils/transactionUtils');
 
 class OrderController {
-  /**
-   * Extract tracking number from transaction status description
-   * @param {string} description - Description from statusHistory (e.g., "Shipped via fedex - Tracking: ABC123")
-   * @returns {object} - { provider: string, trackingNumber: string } or null
-   */
+
   extractTrackingFromDescription(description) {
     if (!description) return null;
 
@@ -49,11 +47,7 @@ class OrderController {
     }
   }
 
-  /**
-   * Get tracking information from transaction status history
-   * @param {string} transactionId - Transaction ID
-   * @returns {Promise<object>} - { trackingNumber: string, provider: string, shippedAt: Date } or null
-   */
+
   async getTrackingFromTransactionStatus(transactionId) {
     try {
       console.log('🔍 Fetching tracking from transaction status:', transactionId);
@@ -112,13 +106,6 @@ class OrderController {
     }
   }
 
-  /**
-   * Update order with tracking information from transaction status
-   * @param {object} order - Order object 
-   * @param {string} orderType - 'standard' or 'escrow'
-   * @param {string} transactionId - Transaction ID
-   * @returns {Promise<object>} - Updated order with tracking info
-   */
   async syncTrackingWithOrder(order, orderType, transactionId) {
     try {
       // Get tracking information from transaction status
@@ -175,9 +162,7 @@ class OrderController {
       return order; // Return original order if sync fails
     }
   }
-  /**
-   * Map payment status to order status
-   */
+
   mapPaymentStatusToOrderStatus(paymentStatus) {
     const statusMap = {
       // Standard payment statuses
@@ -201,12 +186,6 @@ class OrderController {
     return statusMap[paymentStatus] || 'pending_payment';
   }
 
-  /**
-   * Get tracking number from order, checking multiple sources
-   * @param {object} order - Order object
-   * @param {string} orderType - Order type ('escrow', 'standard', etc.)
-   * @returns {string|null} - Tracking number or null
-   */
   getTrackingNumberFromOrder(order, orderType) {
     // Priority order: shipping field, deliveryDetails, escrowTransaction, statusHistory
     let trackingNumber = order.shipping?.trackingNumber || 
@@ -246,12 +225,7 @@ class OrderController {
     return trackingNumber || null;
   }
 
-  /**
-   * Get provider from order, checking multiple sources and extracting from notes
-   * @param {object} order - Order object
-   * @param {string} orderType - Order type ('escrow', 'standard', etc.)
-   * @returns {string|null} - Provider or null
-   */
+
   getProviderFromOrder(order, orderType) {
     // Priority order: shipping field, deliveryDetails, escrowTransaction, statusHistory extraction
     let provider = order.shipping?.provider || 
@@ -291,12 +265,7 @@ class OrderController {
     return provider || null;
   }
 
-  /**
-   * Get order fees from appropriate source based on order type
-   * @param {object} order - Order object
-   * @param {string} orderType - Order type ('escrow', 'standard', etc.)
-   * @returns {object} - Fee breakdown object
-   */
+
   getOrderFees(order, orderType) {
     console.log('💵 Getting order fees for type:', orderType);
     
@@ -418,9 +387,7 @@ class OrderController {
     }
   }
 
-  /**
-   * Get user's orders (buyer or seller) from transactions and standardpayments
-   */
+
   async getUserOrders(req, res) {
     try {
       const userId = req.user._id; // Use MongoDB ObjectId instead of custom UUID
@@ -446,8 +413,8 @@ class OrderController {
       const skip = (parseInt(page) - 1) * parseInt(limit);
       const limitNum = parseInt(limit);
 
-      // Fetch from both transactions and standardpayments
-      const [transactions, standardPayments] = await Promise.all([
+      // Fetch from transactions, standardpayments, and Order collection
+      const [transactions, standardPayments, ordersColl] = await Promise.all([
         // Fetch escrow transactions
         Transaction.find(query)
           .populate('product', 'title price product_photos brand size condition material colors user')
@@ -466,11 +433,21 @@ class OrderController {
           .populate('offer')
           .sort({ createdAt: -1 })
           .skip(skip)
+          .limit(limitNum),
+
+        // Fetch from Order collection (fully formatted orders)
+        Order.find(query)
+          .populate('product', 'title price product_photos brand size condition material colors user')
+          .populate('buyer', 'userName profile email')
+          .populate('seller', 'userName profile email')
+          .sort({ createdAt: -1 })
+          .skip(skip)
           .limit(limitNum)
       ]);
 
       console.log('📦 Found transactions:', transactions.length);
       console.log('💳 Found standard payments:', standardPayments.length);
+      console.log('🧾 Found orders (Order collection):', ordersColl.length);
 
       // Combine and format the results
       const combinedOrders = [];
@@ -562,16 +539,42 @@ class OrderController {
         });
       });
 
+      // Add orders from Order collection
+      ordersColl.forEach(ord => {
+        combinedOrders.push({
+          _id: ord._id,
+          orderNumber: ord.orderNumber || ord.payment?.transactionId,
+          type: ord.payment?.method || 'standard',
+          buyer: ord.buyer,
+          seller: ord.seller,
+          product: ord.product,
+          status: ord.status,
+          orderDetails: ord.orderDetails,
+          payment: {
+            method: ord.payment?.method,
+            status: ord.payment?.status,
+            transactionId: ord.payment?.transactionId,
+            escrowTransactionId: ord.payment?.escrowTransactionId || null,
+            paymentGateway: ord.payment?.paymentGateway,
+            fees: ord.payment?.fees || {}
+          },
+          shipping: ord.shipping,
+          createdAt: ord.createdAt,
+          updatedAt: ord.updatedAt
+        });
+      });
+
       // Sort combined results by creation date
       combinedOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       // Get total count for pagination
-      const [transactionCount, standardPaymentCount] = await Promise.all([
+      const [transactionCount, standardPaymentCount, ordersCount] = await Promise.all([
         Transaction.countDocuments(query),
-        StandardPayment.countDocuments(query)
+        StandardPayment.countDocuments(query),
+        Order.countDocuments(query)
       ]);
 
-      const totalOrders = transactionCount + standardPaymentCount;
+      const totalOrders = transactionCount + standardPaymentCount + ordersCount;
 
       console.log('✅ Total orders found:', totalOrders);
 
@@ -598,9 +601,6 @@ class OrderController {
     }
   }
 
-  /**
-   * Get order details from transactions or standardpayments
-   */
   async getOrderDetails(req, res) {
     try {
       const { orderId } = req.params;
@@ -799,9 +799,7 @@ class OrderController {
     }
   }
 
-  /**
-   * Create order from accepted offer or direct purchase
-   */
+
   async createOrder(req, res) {
     try {
       const userId = req.user._id; // Use MongoDB ObjectId
@@ -915,9 +913,7 @@ class OrderController {
     }
   }
 
-  /**
-   * Update order status
-   */
+
   async updateOrderStatus(req, res) {
     try {
       const { orderId } = req.params;
