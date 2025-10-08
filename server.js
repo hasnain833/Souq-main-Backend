@@ -84,6 +84,9 @@ const profileRoutes = require("./app/user/profile/routes/profileRoutes");
 const notificationRoutes = require("./app/user/notifications/routes/notificationRoutes");
 const generalRoutes = require("./app/user/general/routes/generalRoutes");
 const walletRoutes = require("./app/user/wallet/routes/walletRoutes");
+// Add missing Chat & Offer APIs so frontend endpoints are available
+const chatRoutes = require("./app/user/chat/routes/chatRoutes");
+const offerRoutes = require("./app/user/offer/routes/offerRoutes");
 
 // Auth (login/signup)
 app.use("/api/user/auth", userAuthRoutes);
@@ -108,6 +111,12 @@ app.use("/api/user/notifications", notificationRoutes);
 
 // General (categories, sizes)
 app.use("/api/user/general", generalRoutes);
+ 
+// Chat (create/get chat, messages, seen, block/report)
+app.use("/api/user/chat", chatRoutes);
+
+// Offer (create/accept/decline/get)
+app.use("/api/user/offer", offerRoutes);
 // app.use('/webhooks', webhookRoutes);
 
 // ESCROW_DISABLED: Escrow API temporarily disabled. Keeping code for future use.

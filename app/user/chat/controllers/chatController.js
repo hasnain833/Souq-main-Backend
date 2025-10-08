@@ -19,13 +19,27 @@ exports.createOrGetChat = async (req, res) => {
       return errorResponse(res, 'Invalid product ID', 400);
     }
 
-    // Get product details with full seller information
+    // Get product details with full seller information (populate if available)
     const product = await Product.findById(productId).populate('user', 'userName firstName lastName profile city country lastLoginAt');
     if (!product) {
       return errorResponse(res, 'Product not found', 404);
     }
 
-    const sellerId = product.user._id;
+    // Ensure product.user exists; if only ObjectId is stored, fetch the user
+    let sellerUser = product.user;
+    if (!sellerUser) {
+      return errorResponse(res, 'Product seller not found', 404);
+    }
+
+    // If sellerUser is an ObjectId (no fields), hydrate it
+    if (sellerUser && !sellerUser.userName) {
+      sellerUser = await User.findById(sellerUser).select('userName firstName lastName profile city country lastLoginAt');
+      if (!sellerUser) {
+        return errorResponse(res, 'Seller user not found', 404);
+      }
+    }
+
+    const sellerId = sellerUser._id;
 
     // Check if user is trying to chat with themselves
     if (buyerId.toString() === sellerId.toString()) {
@@ -55,13 +69,13 @@ exports.createOrGetChat = async (req, res) => {
       isExisting = false;
 
       // Create initial welcome message from seller for new chats
-      const sellerName = product.user.firstName && product.user.lastName
-        ? `${product.user.firstName} ${product.user.lastName}`
-        : product.user.userName;
+      const sellerName = sellerUser.firstName && sellerUser.lastName
+        ? `${sellerUser.firstName} ${sellerUser.lastName}`
+        : sellerUser.userName;
 
       // Format location
-      const location = product.user.city && product.user.country
-        ? `📍 ${product.user.country}, ${product.user.city}`
+      const location = sellerUser.city && sellerUser.country
+        ? `📍 ${sellerUser.country}, ${sellerUser.city}`
         : '📍 Location not specified';
 
       // Format last seen
@@ -83,7 +97,7 @@ exports.createOrGetChat = async (req, res) => {
         }
       };
 
-      const lastSeenText = getLastSeenText(product.user.lastLoginAt);
+      const lastSeenText = getLastSeenText(sellerUser.lastLoginAt);
 
       const welcomeText = `Hi, I'm ${sellerName}
 
@@ -97,7 +111,7 @@ ${lastSeenText}`;
         chat._id,
         sellerId,
         buyerId,
-        product.user
+        sellerUser
       );
 
       // Update chat's last message to the initial message
