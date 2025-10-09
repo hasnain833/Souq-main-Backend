@@ -604,8 +604,8 @@ exports.getAllProducts = async (req, res) => {
 
     let query = await buildProductQuery(req.query);
     // ✅ Only include products created within the last N days (configurable)
-    // Default to 30; if days <= 0, no cutoff filter is applied
-    const days = parseInt(req.query.days ?? "30");
+    // Default to 0; if days <= 0, no cutoff filter is applied
+    const days = parseInt(req.query.days ?? "0");
     if (!Number.isNaN(days) && days > 0) {
       const now = new Date();
       const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);

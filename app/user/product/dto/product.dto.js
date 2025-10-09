@@ -33,9 +33,20 @@ exports.buildProductReq = (userId, body, files) => {
 const BASE_URL = process.env.BASE_URL || process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
 const toAbsoluteUrl = (u) => {
   if (!u) return u;
+  if (typeof u === 'object' && u.url) return u.url; // If already processed
   if (/^(https?:)?\/\//i.test(u)) return u;
-  const trimmed = String(u).startsWith('/') ? String(u).slice(1) : String(u);
-  return `${BASE_URL}/${trimmed}`;
+  
+  // Handle Windows paths by normalizing them
+  let path = String(u).replace(/\\/g, '/');
+  
+  // Remove any leading slashes or backslashes
+  path = path.replace(/^[\\/]+/, '');
+  
+  // Remove 'uploads/' if it's at the start to avoid duplication
+  path = path.replace(/^uploads[\\/]?/, '');
+  
+  // Construct the final URL
+  return `${BASE_URL}/uploads/${path}`;
 };
 
 exports.buildProductRes = (product) => {
@@ -81,14 +92,18 @@ exports.getAllProductRes = (product) => {
     price: product.price,
     shipping_cost: product.shipping_cost,
     package_size: product.package_size,
-    stauts: product.stauts,
-    product_photos: Array.isArray(product.product_photos)
-      ? product.product_photos.map(toAbsoluteUrl)
-      : [],
     status: product.status,
+    hide: product.hide || false,
+    product_photos: Array.isArray(product.product_photos)
+      ? product.product_photos.map(photo => ({
+          url: toAbsoluteUrl(photo),
+          path: photo // Store the relative path for reference
+        }))
+      : [],
     favoriteCount: product.favoritedBy ? product.favoritedBy.length : 0,
     views: product.views || 0,
     createdAt: product.createdAt,
+    updatedAt: product.updatedAt
   };
 };
 

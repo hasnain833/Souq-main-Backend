@@ -458,147 +458,147 @@ exports.markMessagesAsSeen = async (req, res) => {
   }
 };
 
-// exports.submitRating = async (req, res) => {
-//   try {
-//     const userId = req.user.id;
-//     const { transactionId } = req.params;
-//     const {
-//       rating,
-//       review,
-//       categories,
-//       ratingType,
-//       transactionType = 'escrow' // Accept transactionType from body or default to escrow
-//     } = req.body;
+exports.submitRating = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { transactionId } = req.params;
+    const {
+      rating,
+      review,
+      categories,
+      ratingType,
+      transactionType = 'escrow' // Accept transactionType from body or default to escrow
+    } = req.body;
 
-//     // Validate required fields
-//     if (!rating || !ratingType) {
-//       return res.status(400).json({
-//         success: false,
-//         error: 'Rating and rating type are required'
-//       });
-//     }
+    // Validate required fields
+    if (!rating || !ratingType) {
+      return res.status(400).json({
+        success: false,
+        error: 'Rating and rating type are required'
+      });
+    }
 
-//     // Validate rating value
-//     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-//       return res.status(400).json({
-//         success: false,
-//         error: 'Rating must be an integer between 1 and 5'
-//       });
-//     }
+    // Validate rating value
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        error: 'Rating must be an integer between 1 and 5'
+      });
+    }
 
-//     // Import transaction utils
-//     const { findEscrowTransaction, findStandardPayment } = require('../../../../utils/transactionUtils');
-//     let transaction, transactionModel, transactionField;
+    // Import transaction utils
+    const { findEscrowTransaction, findStandardPayment } = require('../../../../utils/transactionUtils');
+    let transaction, transactionModel, transactionField;
 
-//     // 1. Try to find as escrow or standard based on transactionType
-//     if (transactionType === 'standard') {
-//       transaction = await findStandardPayment(transactionId, true);
-//       transactionModel = 'standardPayment';
-//       transactionField = 'standardPayment';
-//     } else {
-//       transaction = await findEscrowTransaction(transactionId, true);
-//       transactionModel = 'escrowTransaction';
-//       transactionField = 'escrowTransaction';
-//     }
+    // 1. Try to find as escrow or standard based on transactionType
+    if (transactionType === 'standard') {
+      transaction = await findStandardPayment(transactionId, true);
+      transactionModel = 'standardPayment';
+      transactionField = 'standardPayment';
+    } else {
+      transaction = await findEscrowTransaction(transactionId, true);
+      transactionModel = 'escrowTransaction';
+      transactionField = 'escrowTransaction';
+    }
 
-//     if (!transaction) {
-//       return res.status(404).json({
-//         success: false,
-//         error: 'Transaction not found'
-//       });
-//     }
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        error: 'Transaction not found'
+      });
+    }
 
-//     // User role check
-//     const userObjectId = req.user._id;
-//     const isBuyer = transaction.buyer._id.toString() === userObjectId.toString();
-//     const isSeller = transaction.seller._id.toString() === userObjectId.toString();
+    // User role check
+    const userObjectId = req.user._id;
+    const isBuyer = transaction.buyer._id.toString() === userObjectId.toString();
+    const isSeller = transaction.seller._id.toString() === userObjectId.toString();
 
-//     if (!isBuyer && !isSeller) {
-//       return res.status(403).json({
-//         success: false,
-//         error: 'You are not authorized to rate this transaction'
-//       });
-//     }
+    if (!isBuyer && !isSeller) {
+      return res.status(403).json({
+        success: false,
+        error: 'You are not authorized to rate this transaction'
+      });
+    }
 
-//     // Validate rating type matches user role
-//     if ((isBuyer && ratingType !== 'buyer_to_seller') ||
-//         (isSeller && ratingType !== 'seller_to_buyer')) {
-//       return res.status(400).json({
-//         success: false,
-//         error: 'Invalid rating type for your role in this transaction'
-//       });
-//     }
+    // Validate rating type matches user role
+    if ((isBuyer && ratingType !== 'buyer_to_seller') ||
+        (isSeller && ratingType !== 'seller_to_buyer')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid rating type for your role in this transaction'
+      });
+    }
 
-//     // Check if transaction is completed or funds are held (payment successful)
-//     // You may want to adjust valid statuses for standard payments if needed
-//     const validStatuses = ['completed', 'funds_held'];
-//     if (!validStatuses.includes(transaction.status)) {
-//       return res.status(400).json({
-//         success: false,
-//         error: 'You can only rate transactions where payment has been processed'
-//       });
-//     }
+    // Check if transaction is completed or funds are held (payment successful)
+    // You may want to adjust valid statuses for standard payments if needed
+    const validStatuses = ['completed', 'funds_held'];
+    if (!validStatuses.includes(transaction.status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'You can only rate transactions where payment has been processed'
+      });
+    }
 
-//     // Determine who is being rated
-//     const ratedUserId = isBuyer ? transaction.seller._id : transaction.buyer._id;
+    // Determine who is being rated
+    const ratedUserId = isBuyer ? transaction.seller._id : transaction.buyer._id;
 
-//     // Check if rating already exists
-//     const ratingQuery = {
-//       [transactionField]: transaction._id,
-//       ratedBy: userObjectId,
-//       ratingType: ratingType
-//     };
-//     const existingRating = await Rating.findOne(ratingQuery);
+    // Check if rating already exists
+    const ratingQuery = {
+      [transactionField]: transaction._id,
+      ratedBy: userObjectId,
+      ratingType: ratingType
+    };
+    const existingRating = await Rating.findOne(ratingQuery);
 
-//     if (existingRating) {
-//       return res.status(400).json({
-//         success: false,
-//         error: 'You have already rated this transaction'
-//       });
-//     }
+    if (existingRating) {
+      return res.status(400).json({
+        success: false,
+        error: 'You have already rated this transaction'
+      });
+    }
 
-//     // Create the rating
-//     const newRating = new Rating({
-//       [transactionField]: transaction._id,
-//       product: transaction.product._id,
-//       ratedBy: userObjectId,
-//       ratedUser: ratedUserId,
-//       ratingType: ratingType,
-//       rating: rating,
-//       review: review || '',
-//       categories: categories || {},
-//       status: 'published',
-//       metadata: {
-//         userAgent: req.get('User-Agent'),
-//         ipAddress: req.ip
-//       }
-//     });
+    // Create the rating
+    const newRating = new Rating({
+      [transactionField]: transaction._id,
+      product: transaction.product._id,
+      ratedBy: userObjectId,
+      ratedUser: ratedUserId,
+      ratingType: ratingType,
+      rating: rating,
+      review: review || '',
+      categories: categories || {},
+      status: 'published',
+      metadata: {
+        userAgent: req.get('User-Agent'),
+        ipAddress: req.ip
+      }
+    });
 
-//     await newRating.save();
+    await newRating.save();
 
-//     // Populate the rating for response
-//     await newRating.populate([
-//       { path: 'ratedBy', select: 'firstName lastName profile' },
-//       { path: 'ratedUser', select: 'firstName lastName profile' },
-//       { path: 'product', select: 'title product_photos' }
-//     ]);
+    // Populate the rating for response
+    await newRating.populate([
+      { path: 'ratedBy', select: 'firstName lastName profile' },
+      { path: 'ratedUser', select: 'firstName lastName profile' },
+      { path: 'product', select: 'title product_photos' }
+    ]);
 
-//     res.status(201).json({
-//       success: true,
-//       message: 'Rating submitted successfully',
-//       data: {
-//         rating: newRating
-//       }
-//     });
+    res.status(201).json({
+      success: true,
+      message: 'Rating submitted successfully',
+      data: {
+        rating: newRating
+      }
+    });
 
-//   } catch (error) {
-//     console.error('Error submitting rating:', error);
-//     res.status(500).json({
-//       success: false,
-//       error: 'Failed to submit rating'
-//     });
-//   }
-// };
+  } catch (error) {
+    console.error('Error submitting rating:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to submit rating'
+    });
+  }
+};
 
 // Delete chat
 exports.deleteChat = async (req, res) => {
