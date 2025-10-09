@@ -5,7 +5,6 @@ const chatController = require('../controllers/chatController');
 
 // All chat routes require authentication
 router.use(verifyToken);
-router.get('/chat', chatController.createOrGetChat);
 router.post('/product/:productId', chatController.createOrGetChat);
 
 router.get('/', chatController.getUserChats);
@@ -25,6 +24,6 @@ router.delete('/block/:userId', chatController.unblockUser);
 router.post('/report/:userId', chatController.reportUser);
 
 router.get('/blocked', chatController.getBlockedUsers);
-router.delete('/messages/:messageId', chatController.deleteMessage); // Commented out - function not implemented
+// router.delete('/messages/:messageId', chatController.deleteMessage); // Commented out - function not implemented
 
 module.exports = router;
