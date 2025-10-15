@@ -36,6 +36,12 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: false,
   },
+  // Inventory quantity for multi-unit products
+  quantity: {
+    type: Number,
+    default: 1,
+    min: 0
+  },
   shipping_cost:{
     type: Number
   },

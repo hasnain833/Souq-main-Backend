@@ -24,6 +24,7 @@ exports.buildProductReq = (userId, body, files) => {
     material: body.material,
     condition: body.condition,
     price: body.price,
+    quantity: body.quantity ?? 1,
     shipping_cost: body.shipping_cost,
     package_size: body.package_size,
   };
@@ -64,6 +65,7 @@ exports.buildProductRes = (product) => {
     material: product.material,
     condition: product.condition,
     price: product.price,
+    quantity: product.quantity,
     shipping_cost: product.shipping_cost,
     package_size: product.package_size,
     product_photos: Array.isArray(product.product_photos)
@@ -90,6 +92,7 @@ exports.getAllProductRes = (product) => {
     category: product.category,
     condition: product.condition,
     price: product.price,
+    quantity: product.quantity,
     shipping_cost: product.shipping_cost,
     package_size: product.package_size,
     status: product.status,
@@ -251,7 +254,7 @@ exports.buildProductQuery = async (queryParams = {}) => {
   } = queryParams;
 
   const query = {
-     status: 'active',
+    status: { $in: ['active', 'sold'] },
     hide: false
   };
 

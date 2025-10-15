@@ -1,11 +1,19 @@
 const StandardPayment = require('../../../../db/models/standardPaymentModel');
 const Product = require('../../../../db/models/productModel');
 const User = require('../../../../db/models/userModel');
+const paypal = require('paypal-rest-sdk');
 const { successResponse, errorResponse } = require('../../../../utils/responseHandler');
 const paymentGatewayFactory = require('../../../../services/payment/PaymentGatewayFactory');
 const { creditWalletInternal } = require('../../wallet/controllers/walletController');
 const PaymentCompletionService = require('../../../../services/payment/PaymentCompletionService');
 const currencyService = require('../../../../services/currency/CurrencyService');
+
+const {PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_MODE} = process.env;
+paypal.configure({
+  'mode': PAYPAL_MODE || 'sandbox', //sandbox or live
+  'client_id': PAYPAL_CLIENT_ID || 'YOUR_PAYPAL_CLIENT_ID',
+  'client_secret': PAYPAL_CLIENT_SECRET || 'YOUR_PAYPAL_CLIENT_SECRET'
+});
 
 exports.testStandardPayment = async (req, res) => {
   try {
@@ -58,6 +66,156 @@ exports.getPayPalClientToken = async (req, res) => {
   }
 };
 
+/**
+ * List all standard payments for the logged-in user
+ * GET /user/payments/standard
+ */
+exports.listStandardPayments = async (req, res) => {
+  try {
+    console.log('🔄 Fetching standard payments list for user:', req.user._id);
+
+    const payments = await StandardPayment.find({
+      $or: [{ buyer: req.user._id }, { seller: req.user._id }]
+    })
+      .sort({ createdAt: -1 })
+      .populate('buyer', 'firstName lastName email')
+      .populate('seller', 'firstName lastName email')
+      .populate('product', 'title price product_photos');
+
+    console.log(`✅ Found ${payments.length} standard payments`);
+
+    return successResponse(res, 'Standard payments retrieved successfully', {
+      count: payments.length,
+      payments
+    });
+
+  } catch (error) {
+    console.error('❌ Error listing standard payments:', error);
+    return errorResponse(res, 'Failed to list standard payments', 500);
+  }
+};
+
+
+/**
+ * Render Buy Page and initiate standard payment
+ * POST /user/payments/standard/pay
+ */
+exports.renderBuyPagePayment = async (req, res) => {
+  try {
+    console.log('💳 Render buy page payment request received');
+
+    // Reuse your standard payment creation logic
+    const createResult = await exports.createStandardPayment(req, res);
+
+    if (!createResult || res.headersSent) {
+      console.warn('⚠️ createStandardPayment already sent a response.');
+      return;
+    }
+
+    // If needed, you can also return a redirect or payment link here
+    return successResponse(res, 'Buy page payment initialized', {
+      ...createResult
+    });
+  } catch (error) {
+    console.error('❌ Error rendering buy page payment:', error);
+    return errorResponse(res, 'Failed to render buy page payment', 500);
+  }
+};
+
+
+const PDFDocument = require('pdfkit');
+const moment = require('moment');
+exports.generateInvoicePDF = async (req, res) => {
+  try {
+    console.log('🧾 Generating invoice PDF for payment...');
+
+    const { transactionId } = req.query;
+    if (!transactionId) {
+      return errorResponse(res, 'Transaction ID is required', 400);
+    }
+
+    const payment = await StandardPayment.findOne({ transactionId })
+      .populate('buyer', 'firstName lastName email')
+      .populate('seller', 'firstName lastName email')
+      .populate('product', 'title price');
+
+    if (!payment) {
+      return errorResponse(res, 'Payment not found', 404);
+    }
+
+    if (payment.status !== 'completed') {
+      return errorResponse(res, 'Payment not yet completed', 400);
+    }
+
+    // Create PDF document
+    const doc = new PDFDocument({ margin: 50 });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename=invoice_${payment.transactionId}.pdf`);
+    doc.pipe(res);
+
+    // Header
+    doc.fontSize(20).text('Invoice', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(12).text(`Invoice #: ${payment.transactionId}`);
+    doc.text(`Date: ${moment(payment.createdAt).format('LLL')}`);
+    doc.moveDown();
+
+    // Buyer/Seller
+    doc.text(`Buyer: ${payment.buyer.firstName} ${payment.buyer.lastName} (${payment.buyer.email})`);
+    doc.text(`Seller: ${payment.seller.firstName} ${payment.seller.lastName} (${payment.seller.email})`);
+    doc.moveDown();
+
+    // Product & Payment
+    doc.text(`Product: ${payment.product.title}`);
+    doc.text(`Amount: ${payment.totalAmount} ${payment.currency}`);
+    doc.text(`Status: ${payment.status}`);
+    doc.moveDown();
+
+    doc.text('Thank you for your purchase!', { align: 'center' });
+    doc.end();
+
+    console.log('✅ Invoice PDF generated successfully');
+  } catch (error) {
+    console.error('❌ Error generating invoice PDF:', error);
+    return errorResponse(res, 'Failed to generate invoice PDF', 500);
+  }
+};
+
+
+/**
+ * Confirm or cancel a standard payment
+ * POST /user/payments/standard/cancel
+ */
+exports.confirmStandardPayment = async (req, res) => {
+  try {
+    const { transactionId, status = 'canceled', reason } = req.body;
+    console.log('🚫 Confirm/Cancel payment request:', { transactionId, status, reason });
+
+    const payment = await StandardPayment.findOne({ transactionId });
+
+    if (!payment) {
+      return errorResponse(res, 'Payment not found', 404);
+    }
+
+    // Update payment status
+    payment.status = status;
+    payment.canceledAt = new Date();
+    payment.cancelReason = reason || 'Canceled by user';
+    await payment.save();
+
+    console.log('✅ Payment cancellation confirmed:', transactionId);
+
+    return successResponse(res, `Payment ${status} successfully`, {
+      transactionId,
+      status,
+      reason
+    });
+
+  } catch (error) {
+    console.error('❌ Error confirming/canceling payment:', error);
+    return errorResponse(res, 'Failed to confirm or cancel payment', 500);
+  }
+};
 
 
 exports.createStandardPayment = async (req, res) => {
@@ -721,16 +879,23 @@ exports.checkStandardPaymentStatus = async (req, res) => {
                 // Don't fail the payment completion if order creation fails
               }
 
-              // Mark product as sold after successful standard payment status update
+              // Decrement product quantity; mark as sold only when quantity hits 0
               try {
                 const Product = require('../../../../db/models/productModel');
                 const productDoc = await Product.findById(payment.product?._id || payment.product);
-                if (productDoc && productDoc.status !== 'sold') {
-                  await productDoc.updateStatus('sold', payment.seller._id, 'Marked as sold after standard payment status check');
-                  console.log('🛍️ Product marked as sold (status-check):', productDoc._id.toString());
+                if (productDoc) {
+                  const newQty = Math.max(0, (productDoc.quantity ?? 1) - 1);
+                  productDoc.quantity = newQty;
+                  if (newQty === 0 && productDoc.status !== 'sold') {
+                    await productDoc.updateStatus('sold', payment.seller._id, 'Auto-sold after inventory reached zero');
+                    console.log('🛍️ Product marked as sold (qty=0):', productDoc._id.toString());
+                  } else {
+                    await productDoc.save();
+                    console.log('📦 Product quantity decremented:', { id: productDoc._id.toString(), quantity: newQty });
+                  }
                 }
               } catch (prodErr) {
-                console.warn('⚠️ Failed to mark product as sold (status-check):', prodErr?.message);
+                console.warn('⚠️ Failed to update product inventory:', prodErr?.message);
               }
             } else {
               console.log('⚠️ No amount to credit (sellerAmount <= 0)');

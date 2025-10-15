@@ -3,6 +3,7 @@ const router = express.Router();
 const userAuthRoutes = require('./auth/routes/userAuthRoutes');
 const userSocialAuthRoutes = require('./auth/routes/userSocialAuthRoutes');
 const productRoutes = require('./product/routes/productRoutes');
+const optimizedProductRoutes = require('./product/routes/optimizedProductRoutes');
 const generalRoutes = require('./general/routes/generalRoutes');
 const chatRoutes = require('./chat/routes/chatRoutes');
 const offerRoutes = require('./offer/routes/offerRoutes');
@@ -40,6 +41,9 @@ if (MINIMAL_MODE) {
 
 //User Sell Product APIS
 router.use('/product', productRoutes);
+
+// Optimized Product APIs for better performance
+router.use('/products', optimizedProductRoutes);
 
 //User Chat APIs
 router.use('/chat', chatRoutes);

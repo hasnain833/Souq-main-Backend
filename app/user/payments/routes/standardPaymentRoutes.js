@@ -20,6 +20,10 @@ router.post('/create', standardPaymentController.createStandardPayment);
 router.post('/:paymentId/initialize', standardPaymentController.initializeStandardPayment);
 router.get('/:paymentId', standardPaymentController.getStandardPayment);
 router.get('/:paymentId/check-payment-status', standardPaymentController.checkStandardPaymentStatus);
+router.get('/', standardPaymentController.listStandardPayments);
+router.post('/pay', standardPaymentController.renderBuyPagePayment);
+router.get('/success', standardPaymentController.generateInvoicePDF);
+router.post('/cancel', standardPaymentController.confirmStandardPayment);
 
 // Create a real PayPal Checkout order for Standard Payments
 router.post('/paypal/orders', async (req, res) => {

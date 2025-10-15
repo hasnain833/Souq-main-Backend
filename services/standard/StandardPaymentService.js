@@ -9,7 +9,15 @@ class StandardPaymentService {
   static async getPayment(paymentId) {
     try {
       if (!paymentId) throw new Error('Missing paymentId');
-      const payment = await Payment.findById(paymentId);
+      let payment = null;
+
+      // Support both Mongo ObjectId and string transactionId (e.g., PAY_...)
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(String(paymentId));
+      if (isObjectId) {
+        payment = await Payment.findById(paymentId);
+      } else {
+        payment = await Payment.findOne({ transactionId: String(paymentId) });
+      }
       if (!payment) {
         throw new Error(`Payment record not found for id: ${paymentId}`);
       }
