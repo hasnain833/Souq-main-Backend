@@ -104,8 +104,23 @@ exports.renderBuyPagePayment = async (req, res) => {
   try {
     console.log('💳 Render buy page payment request received');
 
-    // Reuse your standard payment creation logic
-    const createResult = await exports.createStandardPayment(req, res);
+    const { productId, quantity = 1 } = req.body;
+    if (!productId) {
+      return errorResponse(res, 'Product ID is required', 400);
+    }
+    const product = await Product.findById(productId);
+    if (!product) {
+      return errorResponse(res, 'Product not found', 404);
+    }
+    if (product.status !== 'active') {
+      return errorResponse(res, 'Product is not active', 400);
+    }
+
+    const createResult = await PaymentCompletionService.createStandardPayment(
+      req.user,
+      product,
+      quantity
+    );
 
     if (!createResult || res.headersSent) {
       console.warn('⚠️ createStandardPayment already sent a response.');

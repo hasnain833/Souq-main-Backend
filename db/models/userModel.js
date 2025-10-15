@@ -7,9 +7,15 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: uuid4
   },
+  // Legacy profile image URL/path (kept for fallback rendering)
   profile: {
     type: String,
     default: null
+  },
+  // New in-DB profile image storage
+  profileImage: {
+    data: Buffer,
+    contentType: String
   },
   firstName: {
     type: String,

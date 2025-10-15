@@ -150,18 +150,17 @@ exports.uploadProfile = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized: No user ID' });
     }
 
-    if (!req.file || !req.file.path) {
+    if (!req.file || !req.file.buffer) {
       return res.status(400).json({
         success: false,
         message: 'No file uploaded',
       });
     }
 
-    const imageUrl = req.file.path;
-
+    // Save image buffer in MongoDB and keep legacy profile path if it existed
     const updatedUser = await User.findOneAndUpdate(
-      { id: userId }, // ✅ QUERY BY CUSTOM `id` FIELD
-      { profile: imageUrl },
+      { id: userId },
+      { profileImage: { data: req.file.buffer, contentType: req.file.mimetype } },
       { new: true }
     ).select('-password -otp');
 
@@ -176,7 +175,9 @@ exports.uploadProfile = async (req, res) => {
       success: true,
       message: 'Profile photo updated successfully',
       data: {
-        profile: updatedUser.profile
+        // Expose new streaming URL; fallback to legacy profile path if needed
+        profile: `/api/user/profile/image/${updatedUser._id}`,
+        legacyProfile: updatedUser.profile || null
       }
     });
 
@@ -187,6 +188,28 @@ exports.uploadProfile = async (req, res) => {
       message: 'Failed to upload profile photo',
       error: err?.message || 'Internal Server Error'
     });
+  }
+};
+
+// Stream user's profile image from MongoDB with fallback to legacy URL/path
+exports.streamProfileImage = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).select('profile profileImage');
+    if (!user) return res.status(404).send('Not found');
+
+    if (user.profileImage && user.profileImage.data) {
+      res.contentType(user.profileImage.contentType || 'image/jpeg');
+      return res.send(user.profileImage.data);
+    }
+
+    if (user.profile) {
+      return res.redirect(302, user.profile);
+    }
+
+    return res.status(404).send('Image not found');
+  } catch (err) {
+    return res.status(500).send('Server error');
   }
 };
 

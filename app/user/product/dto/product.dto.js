@@ -1,10 +1,12 @@
 const { UserRes } = require("../../profile/dto/user.dto");
 const Category = require('../../../../db/models/categoryModel');
 exports.buildProductReq = (userId, body, files) => {
-  // ✅ Cloudinary URLs directly from multer response
-  const uploadedPhotos = files?.map(file => file.path) || [];
+  // Convert uploaded files (memory storage) into buffers for MongoDB
+  const uploadedImages = Array.isArray(files)
+    ? files.map((file) => ({ data: file.buffer, contentType: file.mimetype }))
+    : [];
 
-  // Handle existing image URLs (e.g. during update)
+  // Keep legacy external or local paths if provided in body for backward compatibility
   let existingUrls = [];
   if (body.product_photos) {
     existingUrls = Array.isArray(body.product_photos)
@@ -14,7 +16,10 @@ exports.buildProductReq = (userId, body, files) => {
 
   return {
     user: userId,
-    product_photos: [...existingUrls, ...uploadedPhotos], // ✅ Cloudinary URLs saved
+    // Keep legacy paths (if any) so older entries continue to work
+    product_photos: existingUrls,
+    // New in-DB images array
+    images: uploadedImages,
     title: body.title,
     description: body.description,
     category: body.category,
@@ -68,6 +73,11 @@ exports.buildProductRes = (product) => {
     quantity: product.quantity,
     shipping_cost: product.shipping_cost,
     package_size: product.package_size,
+    // New: expose DB-stored images via streaming endpoint
+    images: Array.isArray(product.images)
+      ? product.images.map((_, idx) => `${BASE_URL}/api/user/product/image/${product._id}/${idx}`)
+      : [],
+    // Legacy fallback: absolute URLs for old path-based images
     product_photos: Array.isArray(product.product_photos)
       ? product.product_photos.map(toAbsoluteUrl)
       : [],
@@ -97,10 +107,18 @@ exports.getAllProductRes = (product) => {
     package_size: product.package_size,
     status: product.status,
     hide: product.hide || false,
+    // New: expose DB-stored images via streaming endpoint (list view)
+    images: Array.isArray(product.images)
+      ? product.images.map((_, idx) => ({
+          url: `${BASE_URL}/api/user/product/image/${product._id}/${idx}`,
+          index: idx
+        }))
+      : [],
+    // Legacy fallback for old items referencing local/remote paths
     product_photos: Array.isArray(product.product_photos)
       ? product.product_photos.map(photo => ({
           url: toAbsoluteUrl(photo),
-          path: photo // Store the relative path for reference
+          path: photo
         }))
       : [],
     favoriteCount: product.favoritedBy ? product.favoritedBy.length : 0,
@@ -132,6 +150,9 @@ exports.updateProductRes = (product) => {
     shipping_cost: product.shipping_cost,
     package_size: product.package_size,
     status: product.status,
+    images: Array.isArray(product.images)
+      ? product.images.map((_, idx) => `${BASE_URL}/api/user/product/image/${product._id}/${idx}`)
+      : [],
     product_photos: Array.isArray(product.product_photos)
       ? product.product_photos.map(toAbsoluteUrl)
       : [],
@@ -154,6 +175,9 @@ exports.productRes = (product) => {
     shipping_cost: product.shipping_cost,
     package_size: product.package_size,
     stauts: product.stauts,
+    images: Array.isArray(product.images)
+      ? product.images.map((_, idx) => `${BASE_URL}/api/user/product/image/${product._id}/${idx}`)
+      : [],
     product_photos: Array.isArray(product.product_photos)
       ? product.product_photos.map(toAbsoluteUrl)
       : [],

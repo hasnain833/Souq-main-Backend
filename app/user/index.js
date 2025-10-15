@@ -12,6 +12,7 @@ const offerRoutes = require('./offer/routes/offerRoutes');
 const currencyRoutes = require('./currency/routes/currencyRoutes');
 const cardRoutes = require('./cards/routes/cardRoutes');
 const standardPaymentRoutes = require('./payments/routes/standardPaymentRoutes');
+const paypalRestRoutes = require('./payments/routes/paypalRestRoutes');
 const paymentMethodRoutes = require('./payments/routes/paymentMethodRoutes');
 const bankAccountRoutes = require('./bankAccounts/routes/bankAccountRoutes');
 const addressRoutes = require('./addresses/routes/addressRoutes');
@@ -62,6 +63,7 @@ router.use('/cards', cardRoutes);
 
 //User Standard Payment APIs
 router.use('/payments', standardPaymentRoutes);
+router.use('/paypal', paypalRestRoutes);
 
 //User Payment Method APIs
 router.use('/payment-methods', paymentMethodRoutes);

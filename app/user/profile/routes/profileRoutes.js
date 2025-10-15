@@ -24,6 +24,9 @@ router.post('/upload-profile', verifyToken, (req, res, next) => {
 
 router.get('/:userId', optionalAuth, profileController.getAnotherUserProfile);
 
+// Stream user profile image from MongoDB (with legacy fallback)
+router.get('/image/:userId', profileController.streamProfileImage);
+
 router.post('/users/:id/follow', verifyToken, profileController.followUser);
 
 router.post('/users/:id/unfollow', verifyToken, profileController.unfollowUser);

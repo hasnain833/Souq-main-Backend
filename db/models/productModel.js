@@ -7,10 +7,18 @@ const productSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  // Legacy string paths/URLs for images (kept for backward compatibility)
   product_photos: [
     {
-      type: String, // URLs or paths
-      required: true,
+      type: String,
+      required: false,
+    }
+  ],
+  // New in-DB images storage using buffers
+  images: [
+    {
+      data: Buffer,
+      contentType: String
     }
   ],
   title: {

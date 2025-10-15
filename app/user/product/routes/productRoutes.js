@@ -36,4 +36,7 @@ router.put('/:id',
 router.delete('/:id', verifyToken, productController.deleteProduct);
 router.get('/:id', optionalAuth, productController.getProduct); 
 
+// Stream product image by index from MongoDB (with legacy fallback)
+router.get('/image/:productId/:index', productController.streamProductImage);
+
 module.exports = router;

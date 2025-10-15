@@ -94,6 +94,7 @@ exports.updateProductStatus = async (req, res) => {
 };
 exports.sellProductByFormdata = async (req, res) => {
   try {
+    // Build payload with in-DB image buffers
     const productPayload = buildProductReq(req.user._id, req.body, req.files);
     const createdProduct = await Product.create(productPayload);
     const product = await Product.findById(createdProduct._id).populate(
@@ -363,6 +364,33 @@ exports.updateProduct = async (req, res) => {
     });
   } catch (error) {
     return errorResponse(res, "Failed to update product", 500, error.message);
+  }
+};
+
+// Stream a specific product image by product id and image index
+exports.streamProductImage = async (req, res) => {
+  try {
+    const { productId, index } = req.params;
+    const product = await Product.findById(productId).select('images product_photos');
+    if (!product) return res.status(404).send('Not found');
+
+    const idx = parseInt(index, 10);
+    if (Number.isNaN(idx) || idx < 0) return res.status(400).send('Invalid index');
+
+    // Prefer new in-DB images
+    if (Array.isArray(product.images) && product.images[idx] && product.images[idx].data) {
+      res.contentType(product.images[idx].contentType || 'image/jpeg');
+      return res.send(product.images[idx].data);
+    }
+
+    // Fallback: redirect legacy file path/URL if exists
+    if (Array.isArray(product.product_photos) && product.product_photos[idx]) {
+      return res.redirect(302, product.product_photos[idx]);
+    }
+
+    return res.status(404).send('Image not found');
+  } catch (error) {
+    return res.status(500).send('Server error');
   }
 };
 
