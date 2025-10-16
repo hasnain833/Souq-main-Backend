@@ -1,29 +1,37 @@
-const Payment = require('../../db/models/standardPaymentModel'); // Your Mongoose model
+const Payment = require("../../db/models/standardPaymentModel"); // Your Mongoose model
+const mongoose = require("mongoose");
 
 class StandardPaymentService {
-  /**
-   * Get a payment record by its id
-   * @param {string} paymentId
-   * @returns {Promise<Object>} payment object, or null if not found
-   */
   static async getPayment(paymentId) {
     try {
-      if (!paymentId) throw new Error('Missing paymentId');
-      let payment = null;
+      if (!paymentId) {
+        throw new Error("Missing paymentId");
+      }
 
-      // Support both Mongo ObjectId and string transactionId (e.g., PAY_...)
-      const isObjectId = /^[0-9a-fA-F]{24}$/.test(String(paymentId));
-      if (isObjectId) {
-        payment = await Payment.findById(paymentId);
-      } else {
-        payment = await Payment.findOne({ transactionId: String(paymentId) });
+      let payment = null;
+      const idStr = String(paymentId).trim();
+
+      // Use mongoose validation for ObjectId
+      if (mongoose.Types.ObjectId.isValid(idStr)) {
+        payment = await Payment.findById(idStr);
       }
+
+      // If not found by _id, try transactionId
       if (!payment) {
-        throw new Error(`Payment record not found for id: ${paymentId}`);
+        payment = await Payment.findOne({ transactionId: idStr });
       }
+
+      if (!payment) {
+        // don't throw for not-found — return null so caller can handle 404
+        console.info(
+          `[StandardPaymentService] getPayment: not found for id=${idStr}`
+        );
+        return null;
+      }
+
       return { payment };
     } catch (error) {
-      console.error('[StandardPaymentService] getPayment error:', error);
+      console.error("[StandardPaymentService] getPayment error:", error);
       return null;
     }
   }
@@ -39,7 +47,7 @@ class StandardPaymentService {
       await payment.save();
       return { payment };
     } catch (error) {
-      console.error('[StandardPaymentService] createPayment error:', error);
+      console.error("[StandardPaymentService] createPayment error:", error);
       return null;
     }
   }
@@ -52,10 +60,12 @@ class StandardPaymentService {
    */
   static async updatePayment(paymentId, updateFields) {
     try {
-      const payment = await Payment.findByIdAndUpdate(paymentId, updateFields, { new: true });
+      const payment = await Payment.findByIdAndUpdate(paymentId, updateFields, {
+        new: true,
+      });
       return { payment };
     } catch (error) {
-      console.error('[StandardPaymentService] updatePayment error:', error);
+      console.error("[StandardPaymentService] updatePayment error:", error);
       return null;
     }
   }
@@ -70,7 +80,10 @@ class StandardPaymentService {
       const payments = await Payment.find({ buyer: userId });
       return payments;
     } catch (error) {
-      console.error('[StandardPaymentService] listPaymentsForUser error:', error);
+      console.error(
+        "[StandardPaymentService] listPaymentsForUser error:",
+        error
+      );
       return [];
     }
   }

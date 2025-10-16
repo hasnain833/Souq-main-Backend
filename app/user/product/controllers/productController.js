@@ -553,9 +553,10 @@ exports.filterProducts = async (req, res) => {
       package_size: product.package_size,
       views: product.views || 0,
       favoriteCount: product.favoriteCount || 0,
-      product_photos: product.product_photos.map(
-        (photo) => `${process.env.BASE_URL}/${photo}`
-      ),
+      product_photos: product.product_photos.map((photo) => {
+        const str = String(photo || '');
+        return /^(https?:)?\/\//i.test(str) ? str : `${process.env.BASE_URL}/uploads/${str.replace(/^\/+/, '')}`;
+      }),
       createdAt: product.createdAt,
     }));
 

@@ -150,17 +150,20 @@ exports.uploadProfile = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized: No user ID' });
     }
 
-    if (!req.file || !req.file.buffer) {
+    if (!req.file || !req.file.location) {
       return res.status(400).json({
         success: false,
         message: 'No file uploaded',
       });
     }
 
-    // Save image buffer in MongoDB and keep legacy profile path if it existed
+    // Save S3 public URL into profile field; remove any previous in-DB buffer
     const updatedUser = await User.findOneAndUpdate(
       { id: userId },
-      { profileImage: { data: req.file.buffer, contentType: req.file.mimetype } },
+      { 
+        profile: req.file.location,
+        $unset: { profileImage: 1 }
+      },
       { new: true }
     ).select('-password -otp');
 
@@ -175,9 +178,10 @@ exports.uploadProfile = async (req, res) => {
       success: true,
       message: 'Profile photo updated successfully',
       data: {
-        // Expose new streaming URL; fallback to legacy profile path if needed
-        profile: `/api/user/profile/image/${updatedUser._id}`,
-        legacyProfile: updatedUser.profile || null
+        // Expose direct S3 URL for frontend rendering
+        profile: updatedUser.profile,
+        // Backward-compat streaming endpoint (still available for legacy items)
+        streamUrl: `/api/user/profile/image/${updatedUser._id}`
       }
     });
 

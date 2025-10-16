@@ -12,11 +12,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
-  // New in-DB profile image storage
-  profileImage: {
-    data: Buffer,
-    contentType: String
-  },
+  // Deprecated: previously stored image buffers; now using S3 URLs in `profile`
   firstName: {
     type: String,
     required: true,

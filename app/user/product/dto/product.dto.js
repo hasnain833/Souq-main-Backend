@@ -1,9 +1,9 @@
 const { UserRes } = require("../../profile/dto/user.dto");
 const Category = require('../../../../db/models/categoryModel');
 exports.buildProductReq = (userId, body, files) => {
-  // Convert uploaded files (memory storage) into buffers for MongoDB
-  const uploadedImages = Array.isArray(files)
-    ? files.map((file) => ({ data: file.buffer, contentType: file.mimetype }))
+  // Collect S3 file URLs from multer-s3 (file.location)
+  const s3Urls = Array.isArray(files)
+    ? files.map((file) => file.location).filter(Boolean)
     : [];
 
   // Keep legacy external or local paths if provided in body for backward compatibility
@@ -16,10 +16,10 @@ exports.buildProductReq = (userId, body, files) => {
 
   return {
     user: userId,
-    // Keep legacy paths (if any) so older entries continue to work
-    product_photos: existingUrls,
-    // New in-DB images array
-    images: uploadedImages,
+    // Merge any existing URLs with newly uploaded S3 URLs
+    product_photos: [...existingUrls, ...s3Urls],
+    // Stop storing image buffers in DB
+    images: [],
     title: body.title,
     description: body.description,
     category: body.category,

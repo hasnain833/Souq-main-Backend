@@ -255,14 +255,14 @@ exports.uploadProfilePicture = async (req, res) => {
   try {
     const adminId = req.admin._id;
 
-    if (!req.file) {
+    if (!req.file || !req.file.location) {
       return errorResponse(res, 'No image file provided', 400);
     }
 
     // Update admin profile with image URL
     const updatedAdmin = await Admin.findByIdAndUpdate(
       adminId,
-      { profile: req.file.path }, // Cloudinary URL
+      { profile: req.file.location }, // S3 public URL
       { new: true, select: '-password -refreshToken' }
     );
 
@@ -272,7 +272,7 @@ exports.uploadProfilePicture = async (req, res) => {
 
     return successResponse(res, 'Profile picture uploaded successfully', {
       admin: updatedAdmin,
-      profileUrl: req.file.path
+      profileUrl: req.file.location
     });
 
   } catch (error) {

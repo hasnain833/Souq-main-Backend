@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const profileController = require('../controllers/profileController')
 const verifyToken = require('../../../../utils/verifyToken')
-const createUploader = require('../../../../utils/upload');
+const createS3Uploader = require('../../../../utils/s3Uploader');
 const optionalAuth = require('../../../../utils/optionalAuth');
 
 
@@ -13,9 +13,9 @@ router.put('/update-profile', verifyToken, profileController.updateProfile);
 router.delete('/delete-Profile', verifyToken, profileController.deleteUser);
 // router.post('/upload-profile',verifyToken,upload.single('profile_image'),profileController.uploadProfile);
 
-// Lazily create uploader to avoid FS usage at import time in serverless
+// Use S3 uploader (public-read) for profile images
 router.post('/upload-profile', verifyToken, (req, res, next) => {
-  const upload = createUploader('profile');
+  const upload = createS3Uploader('uploads/profile');
   upload.single('profile')(req, res, (err) => {
     if (err) return next(err);
     next();

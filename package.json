@@ -22,6 +22,7 @@
   "license": "ISC",
   "description": "- No separate admin server/port. Single backend on `PORT` (default 5000). - CORS uses `FRONTEND_ORIGIN` in production; permissive in dev when not set. - Email and Phone verification are supported and controlled via env flags. - Real SMTP and SMS providers configurable via env. - Added `scripts/seedAdmin.js` to seed an initial admin if none exists.",
   "dependencies": {
+    "aws-sdk": "^2.1692.0",
     "axios": "^1.6.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^1.41.3",
@@ -33,6 +34,7 @@
     "mongodb": "^6.20.0",
     "mongoose": "^8.15.0",
     "multer": "^2.0.2",
+    "multer-s3": "^3.0.1",
     "multer-storage-cloudinary": "^4.0.0",
     "node-cron": "^4.1.1",
     "nodemailer": "^7.0.3",

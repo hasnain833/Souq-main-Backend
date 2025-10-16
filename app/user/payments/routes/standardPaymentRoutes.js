@@ -51,6 +51,8 @@ router.post('/paypal/orders', async (req, res) => {
     const amount = Number(buyerPays);
     const currency = p.currency || 'USD';
 
+    try { console.log('🧾 PayPal order compute:', { transactionId, amount, currency }); } catch (_) {}
+
     // 3) Create PayPal order
     const paypal = new PayPalService(config);
     const result = await paypal.initializePayment({
@@ -61,6 +63,14 @@ router.post('/paypal/orders', async (req, res) => {
       returnUrl: returnUrl || `${req.protocol}://${req.get('host')}/payment-success?transaction=${transactionId}&type=standard`,
       cancelUrl: cancelUrl || `${req.protocol}://${req.get('host')}/payment-cancelled?transaction=${transactionId}&type=standard`,
     });
+
+    try {
+      console.log('✅ PayPal initializePayment result:', {
+        success: result?.success,
+        orderId: result?.transactionId,
+        approvalUrl: result?.paymentUrl,
+      });
+    } catch (_) {}
 
     if (!result?.success) {
       return res.status(502).json({ success: false, error: result?.error || 'Failed to create PayPal order' });

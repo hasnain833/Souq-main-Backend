@@ -1,4 +1,4 @@
-const createUploader = require('../../../../utils/upload');
+const createS3Uploader = require('../../../../utils/s3Uploader');
 
 // Admin profile picture uploader - reuse existing upload utility
 // The upload utility will use req.user.id, so we need to set req.user from req.admin
@@ -20,7 +20,7 @@ const setUserFromAdmin = (req, res, next) => {
 const uploadAdminProfile = [
   setUserFromAdmin,
   (req, res, next) => {
-    const uploader = createUploader('admin-profiles');
+    const uploader = createS3Uploader('uploads/admin-profiles');
     uploader.single('profile')(req, res, (err) => {
       if (err) return next(err);
       next();

@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../../../../utils/verifyToken')
-const createUploader = require('../../../../utils/upload');
+const createS3Uploader = require('../../../../utils/s3Uploader');
 const productController = require('../controllers/productController')
 const optionalAuth = require('../../../../utils/optionalAuth')
-const upload = createUploader('products');
+const upload = createS3Uploader('uploads/products');
 
 // Routes
 router.get('/favorites', verifyToken, productController.getUserFavoriteProducts);
