@@ -1,0 +1,114 @@
+name: Node.js CI/CD - Staging
+
+on:
+  push:
+    branches: [ "staging" ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      # 1️⃣ Checkout code
+      - uses: actions/checkout@v4
+
+      # 2️⃣ Setup Node.js
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # 4️⃣ Prepare .env file locally
+      - name: Create .env file
+        env:
+          STAGING_ENV_FILE: ${{ secrets.STAGING_ENV_FILE }}
+        run: |
+          echo "$STAGING_ENV_FILE" > .env
+          echo ".env prepared locally ✅"
+
+      # 5️⃣ Deploy to EC2
+      - name: Deploy to EC2
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          STAGING_SERVER: ec2-user@51.20.12.200
+        run: |
+          echo "🚀 Deploying to EC2 server..."
+
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          # Sync latest code to EC2 app folder
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa" \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'ssl/*.pem' \
+            ./ $STAGING_SERVER:/home/ec2-user/app/
+
+          # Copy .env file
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa .env $STAGING_SERVER:/home/ec2-user/app/.env
+          
+          echo "Files uploaded ✅"
+
+      # 6️⃣ Clean Restart on EC2
+      - name: Clean Restart on EC2
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          STAGING_SERVER: ec2-user@51.20.12.200
+        run: |
+          echo "🔁 Clean restart on EC2..."
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa $STAGING_SERVER << 'EOF'
+            set -e  # Exit on any error
+            
+            cd /home/ec2-user/app
+            
+            echo "📦 Installing dependencies..."
+            npm install --omit=dev
+            
+            echo "🛑 Stopping existing processes..."
+            pm2 stop habibi-market-staging 2>/dev/null || true
+            pm2 delete habibi-market-staging 2>/dev/null || true
+            pm2 kill 2>/dev/null || true
+            pkill -f "node.*server.js" 2>/dev/null || true
+            
+            echo "⏳ Waiting for processes to stop..."
+            sleep 3
+            
+            echo "🚀 Starting application with HTTPS..."
+            # This will use the .env file automatically
+            NODE_ENV=production pm2 start npm --name "habibi-market-staging" -- run start
+            
+            echo "💾 Saving PM2 configuration..."
+            pm2 save 2>/dev/null || true
+            
+            echo "⏳ Waiting for app to start..."
+            sleep 8
+            
+            echo "📋 Application Status:"
+            pm2 list
+            
+            echo "🔍 Checking HTTPS in logs..."
+            pm2 logs habibi-market-staging --lines 6 --nostream
+            
+            echo "🌐 Testing server response..."
+            curl -k -s -o /dev/null -w "HTTPS Status: %{http_code}\n" https://localhost:5000 || \
+            curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost:5000 || \
+            echo "Server not responding yet"
+          EOF
+          
+          echo "✅ Deployment completed!"

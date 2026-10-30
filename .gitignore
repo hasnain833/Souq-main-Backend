@@ -1,0 +1,15 @@
+/node_modules
+.env
+.env.production
+.env.staging
+# scripts/
+# payment/
+# logs/
+# *.log
+
+# Dependencies
+node_modules/
+
+# Local environment files
+.env.*
+!.env.example
